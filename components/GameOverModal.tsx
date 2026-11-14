@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Crown, Sparkles, RefreshCw, LogOut, Flame, ShieldCheck, Layers } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Crown, Sparkles, RefreshCw, LogOut, Flame, ShieldCheck, Layers, AlertTriangle } from 'lucide-react';
 import { GameState, DeckType } from '@/lib/types/game';
 
 interface GameOverModalProps {
@@ -12,6 +12,7 @@ interface GameOverModalProps {
   onNextRound: () => void;
   onSetDeckType: (deckType: DeckType) => void;
   onLeave: () => void;
+  onOpenAuthModal?: () => void;
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
@@ -22,7 +23,23 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onNextRound,
   onSetDeckType,
   onLeave,
+  onOpenAuthModal,
 }) => {
+  const [isGuestLimitReached, setIsGuestLimitReached] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const stored = localStorage.getItem('bhabhi_user_profile');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.authProvider === 'guest' && (parsed.guestGamesPlayed || 0) >= 2) {
+          setIsGuestLimitReached(true);
+        }
+      } catch {}
+    }
+  }, [isOpen]);
+
   if (!isOpen || gameState.status !== 'game_over') return null;
 
   // Identify Bhabhi (Loser)
@@ -173,6 +190,28 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </span>
           )}
         </div>
+
+        {/* GUEST LIMIT NOTICE */}
+        {isGuestLimitReached && (
+          <div className="rounded-2xl bg-gradient-to-r from-red-950 via-slate-950 to-red-950 border border-red-500/70 p-3 text-center space-y-2">
+            <div className="flex items-center justify-center gap-1.5 text-amber-300 font-bold text-xs">
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <span>Guest Limit Reached (2/2 Matches Played)</span>
+            </div>
+            <p className="text-[11px] text-red-200">
+              You have completed your 2 trial matches as Guest. Please sign in with Google or Phone to unlock unlimited rounds and record your VIP rankings!
+            </p>
+            {onOpenAuthModal && (
+              <button
+                type="button"
+                onClick={onOpenAuthModal}
+                className="px-4 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-gold hover:brightness-110 transition"
+              >
+                Sign In With Google / Phone
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ACTION BUTTONS */}
         <div className="flex flex-col sm:flex-row gap-2.5 pt-1">

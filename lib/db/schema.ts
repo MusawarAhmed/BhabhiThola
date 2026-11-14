@@ -1,6 +1,24 @@
 import { pgTable, text, varchar, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import type { PlayedCard, Card, GameLogEntry } from '../types/game';
 
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),
+  email: varchar('email', { length: 255 }),
+  phone: varchar('phone', { length: 50 }),
+  alias: varchar('alias', { length: 100 }).notNull(),
+  avatarUrl: text('avatar_url').notNull(),
+  gender: varchar('gender', { length: 10 }).default('male').notNull(),
+  authProvider: varchar('auth_provider', { length: 20 }).default('guest').notNull(), // 'guest' | 'google' | 'phone' | 'email'
+  passwordHash: text('password_hash'),
+  gamesPlayed: integer('games_played').default(0).notNull(),
+  gamesWon: integer('games_won').default(0).notNull(),
+  bhabhiCount: integer('bhabhi_count').default(0).notNull(),
+  guestGamesPlayed: integer('guest_games_played').default(0).notNull(),
+  isVerified: boolean('is_verified').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const rooms = pgTable('rooms', {
   id: text('id').primaryKey(),
   code: varchar('code', { length: 10 }).notNull().unique(),
@@ -31,6 +49,8 @@ export const players = pgTable('players', {
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
 });
 
+export type DbUser = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 export type Room = typeof rooms.$inferSelect;
 export type NewRoom = typeof rooms.$inferInsert;
 export type DbPlayer = typeof players.$inferSelect;

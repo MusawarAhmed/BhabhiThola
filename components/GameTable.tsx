@@ -135,6 +135,48 @@ export const GameTable: React.FC<GameTableProps> = ({
   const wsRef = useRef<WebSocket | null>(null);
   const sseRef = useRef<EventSource | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const recordedRoundRef = useRef<number | null>(null);
+
+  // Record Game Stats on Round/Game Completion
+  useEffect(() => {
+    if (gameState?.status === 'game_over') {
+      const currentRound = gameState.roundNumber || 1;
+      if (recordedRoundRef.current === currentRound) return;
+      recordedRoundRef.current = currentRound;
+
+      const me = gameState?.players.find((p) => p.id === playerId);
+      const isSafe = Boolean(me?.isSafe);
+      const isBhabhi = Boolean(me?.isBhabhi || gameState.bhabhiPlayerId === playerId);
+
+      const stored = localStorage.getItem('bhabhi_user_profile');
+      let isGuest = true;
+      let uId = playerId;
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          isGuest = parsed.authProvider === 'guest';
+          uId = parsed.id || playerId;
+          parsed.gamesPlayed = (parsed.gamesPlayed || 0) + 1;
+          if (isSafe) parsed.gamesWon = (parsed.gamesWon || 0) + 1;
+          if (isBhabhi) parsed.bhabhiCount = (parsed.bhabhiCount || 0) + 1;
+          if (isGuest) parsed.guestGamesPlayed = (parsed.guestGamesPlayed || 0) + 1;
+          localStorage.setItem('bhabhi_user_profile', JSON.stringify(parsed));
+        } catch {}
+      }
+
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RECORD_GAME_STATS',
+          userId: uId,
+          isSafe,
+          isBhabhi,
+          isGuest,
+        }),
+      }).catch(() => {});
+    }
+  }, [gameState?.status, gameState?.roundNumber, gameState?.bhabhiPlayerId, gameState?.players, playerId]);
 
   // Turn Countdown Timer Effect
   useEffect(() => {
@@ -1180,6 +1222,7 @@ export const GameTable: React.FC<GameTableProps> = ({
           onNextRound={() => dispatchAction({ type: 'START_NEXT_ROUND' })}
           onSetDeckType={(deckType) => dispatchAction({ type: 'SET_DECK_TYPE', deckType })}
           onLeave={onLeave}
+          onOpenAuthModal={() => setShowProfileModal(true)}
         />
       )}
 

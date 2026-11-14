@@ -39,6 +39,9 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
   const [maxPlayers, setMaxPlayers] = useState<number>(4);
   const [showRules, setShowRules] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [authProvider, setAuthProvider] = useState<'guest' | 'google' | 'phone' | 'email'>('guest');
+  const [guestGamesPlayed, setGuestGamesPlayed] = useState<number>(0);
+  const [forceAuthModal, setForceAuthModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
 
@@ -47,7 +50,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
   const [isCheckingCode, setIsCheckingCode] = useState(false);
   const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load saved profile on mount
+  // Load saved profile on mount or create unique Guest-675577
   useEffect(() => {
     const stored = localStorage.getItem('bhabhi_user_profile');
     if (stored) {
@@ -56,11 +59,59 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
         if (parsed.alias) setPlayerName(parsed.alias);
         if (parsed.avatarUrl) setAvatarUrl(parsed.avatarUrl);
         if (parsed.gender) setGender(parsed.gender);
+        if (parsed.authProvider) setAuthProvider(parsed.authProvider);
+        if (parsed.guestGamesPlayed !== undefined) setGuestGamesPlayed(parsed.guestGamesPlayed);
+
+        if (parsed.id) {
+          fetch(`/api/auth?userId=${encodeURIComponent(parsed.id)}`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.success && d.user) {
+                setPlayerName(d.user.alias || parsed.alias);
+                setAvatarUrl(d.user.avatarUrl || parsed.avatarUrl);
+                setAuthProvider(d.user.authProvider || parsed.authProvider);
+                setGuestGamesPlayed(d.user.guestGamesPlayed || 0);
+              }
+            })
+            .catch(() => {});
+        }
       } catch {}
     } else {
-      setPlayerName('mk');
+      const randomNum = Math.floor(100000 + Math.random() * 900000);
+      const guestAlias = `Guest-${randomNum}`;
+      const randGender = Math.random() > 0.5 ? 'male' : 'female';
+      const randAvatar = `/avatars/${randGender}_${randGender === 'male' ? 'm' : 'f'}${Math.floor(Math.random() * 8) + 1}.jpg`;
+      const initialProfile: UserProfile = {
+        id: playerId || 'guest_' + Math.random().toString(36).substring(2, 9),
+        alias: guestAlias,
+        avatarUrl: randAvatar,
+        gender: randGender,
+        authProvider: 'guest',
+        guestGamesPlayed: 0,
+        gamesPlayed: 0,
+        gamesWon: 0,
+        bhabhiCount: 0,
+      };
+      localStorage.setItem('bhabhi_user_profile', JSON.stringify(initialProfile));
+      setPlayerName(guestAlias);
+      setAvatarUrl(randAvatar);
+      setGender(randGender);
+      setAuthProvider('guest');
+      setGuestGamesPlayed(0);
+
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'GUEST_LOGIN',
+          userId: initialProfile.id,
+          alias: guestAlias,
+          avatarUrl: randAvatar,
+          gender: randGender,
+        }),
+      }).catch(() => {});
     }
-  }, []);
+  }, [playerId]);
 
   // Debounced Room Code Detection
   useEffect(() => {
@@ -111,9 +162,19 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
     setPlayerName(profile.alias);
     setAvatarUrl(profile.avatarUrl);
     setGender(profile.gender);
+    setAuthProvider(profile.authProvider);
+    if (profile.guestGamesPlayed !== undefined) {
+      setGuestGamesPlayed(profile.guestGamesPlayed);
+    }
   };
 
   const handleCreateRoom = async (overrideCode?: string) => {
+    if (authProvider === 'guest' && guestGamesPlayed >= 2) {
+      setError('Guest trial limit of 2 games reached! Please sign in with Google or Phone to continue.');
+      setForceAuthModal(true);
+      setShowProfileModal(true);
+      return;
+    }
     if (!playerName.trim()) {
       setError('Please enter your player alias');
       return;
@@ -149,6 +210,12 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
 
   const handleJoinByCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (authProvider === 'guest' && guestGamesPlayed >= 2) {
+      setError('Guest trial limit of 2 games reached! Please sign in with Google or Phone to continue.');
+      setForceAuthModal(true);
+      setShowProfileModal(true);
+      return;
+    }
     if (!playerName.trim()) {
       setError('Please enter your player alias');
       return;
@@ -201,25 +268,78 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Quick Profile Pill */}
-          <button
-            onClick={() => setShowProfileModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-casino-gold/50 bg-slate-900/80 hover:bg-slate-800 transition text-xs font-semibold shadow"
-          >
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="w-5 h-5 rounded-full object-cover ring-1 ring-casino-gold"
-            />
-            <span className="text-casino-goldLight max-w-[80px] truncate">{playerName || 'Profile'}</span>
-          </button>
+          {/* Quick Profile Pill with Guest / VIP indicator */}
+          {authProvider === 'guest' ? (
+            <button
+              onClick={() => {
+                setForceAuthModal(false);
+                setShowProfileModal(true);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/50 bg-slate-900/90 hover:bg-slate-800 transition text-xs font-semibold shadow"
+              title="Click to view VIP profile"
+            >
+              <img
+                src={avatarUrl}
+                alt="Avatar"
+                className="w-5 h-5 rounded-full object-cover ring-1 ring-amber-400"
+              />
+              <span className="text-amber-300 max-w-[95px] truncate">{playerName || 'Guest'}</span>
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded-full border border-amber-500/40">
+                {guestGamesPlayed}/2
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setForceAuthModal(false);
+                setShowProfileModal(true);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-casino-gold/60 bg-slate-900/90 hover:bg-slate-800 transition text-xs font-semibold shadow"
+              title="Click to open VIP Dashboard"
+            >
+              <img
+                src={avatarUrl}
+                alt="Avatar"
+                className="w-5 h-5 rounded-full object-cover ring-1 ring-casino-gold"
+              />
+              <span className="text-casino-goldLight max-w-[95px] truncate">{playerName}</span>
+              <span className="text-[9px] bg-emerald-950 text-emerald-400 px-1.5 py-0.2 rounded-full border border-emerald-500/40 font-bold">
+                VIP
+              </span>
+            </button>
+          )}
+
+          {/* Sign In or VIP Dashboard Action Pill */}
+          {authProvider === 'guest' ? (
+            <button
+              onClick={() => {
+                setForceAuthModal(true);
+                setShowProfileModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 transition text-xs font-bold shadow-gold"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Sign In / Upgrade</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setForceAuthModal(false);
+                setShowProfileModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-casino-gold/50 bg-slate-900/80 hover:bg-slate-800 text-casino-goldLight transition text-xs font-semibold"
+            >
+              <Crown className="w-3.5 h-3.5 text-casino-gold" />
+              <span className="hidden sm:inline">VIP Dashboard</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowRules(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-casino-gold/40 text-casino-goldLight hover:bg-casino-gold/10 transition text-sm font-medium"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-casino-gold/40 text-casino-goldLight hover:bg-casino-gold/10 transition text-xs font-medium"
           >
             <HelpCircle className="w-4 h-4 text-casino-gold" />
-            <span>Rules</span>
+            <span className="hidden sm:inline">Rules</span>
           </button>
         </div>
       </header>
@@ -453,12 +573,18 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
       {/* Profile & Avatar Selector Modal */}
       <ProfileModal
         isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
+        onClose={() => {
+          setShowProfileModal(false);
+          setForceAuthModal(false);
+        }}
         onProfileUpdated={handleProfileUpdated}
+        forceAuthMode={forceAuthModal}
         currentProfile={{
           alias: playerName,
           avatarUrl,
           gender,
+          authProvider,
+          guestGamesPlayed,
         }}
       />
 

@@ -99,3 +99,20 @@ body {
 .animate-deal-east {
   animation: deal-east 0.75s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
+
+/* Custom Casino Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.75);
+}
