@@ -429,85 +429,88 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const isGuestOverLimit = authMethod === 'guest' && guestGamesPlayed >= 2;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      {/* Modal Card - Widened to max-w-3xl, Single Scroll Container with smooth scrollbar */}
-      <div className="bg-slate-900 border-2 border-casino-gold/50 rounded-2xl w-full max-w-3xl lg:max-w-4xl shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-slate-100 flex flex-col max-h-[92vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-5 overflow-y-auto">
+      {/* Modal Card - Widened & Fully Responsive for 375px Mobile up to 4K */}
+      <div className="bg-slate-900 border-2 border-casino-gold/50 rounded-2xl w-full max-w-[96vw] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl shadow-[0_20px_60px_rgba(0,0,0,0.95)] relative text-slate-100 flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* Modal Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-slate-950/80">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-casino-gold/15 border border-casino-gold/40 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-              <Crown className="w-6 h-6 text-casino-gold" />
+        <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-slate-950/80">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-casino-gold/15 border border-casino-gold/40 shadow-[0_0_15px_rgba(234,179,8,0.2)] shrink-0">
+              <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-casino-gold" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-serif font-black text-xl text-gold-gradient tracking-wide">
-                  VIP Club & Player Profile
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h3 className="font-serif font-black text-base sm:text-xl text-gold-gradient tracking-wide truncate">
+                  VIP Club Profile
                 </h3>
                 {authMethod !== 'guest' ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-500/60 text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-500/60 text-emerald-400 font-bold flex items-center gap-1 shrink-0">
                     <ShieldCheck className="w-3 h-3" /> VIP Verified
                   </span>
                 ) : (
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+                  <span className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0 ${
                     isGuestOverLimit
                       ? 'bg-red-950 border border-red-500/60 text-red-400 animate-pulse'
                       : 'bg-amber-950/60 border border-amber-500/40 text-amber-300'
                   }`}>
-                    <User className="w-3 h-3" /> Guest ({guestGamesPlayed}/2 Games)
+                    <User className="w-3 h-3" /> Guest ({guestGamesPlayed}/2)
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400">
-                Authenticate with Google or Phone to unlock unlimited games, leaderboards & permanent VIP stats
+              <p className="text-[10px] sm:text-xs text-slate-400 hidden xs:block truncate">
+                Connect Google or Phone for permanent VIP stats & unlimited games
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800/80 transition"
+            className="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800/80 transition shrink-0 ml-2"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-950/40 px-6 gap-2 pt-2">
+        {/* Tab Navigation - Responsive on 375px Mobile */}
+        <div className="flex border-b border-slate-800 bg-slate-950/40 px-3 sm:px-6 gap-1 sm:gap-2 pt-2 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`py-2.5 px-4 text-xs font-bold rounded-t-xl transition border-b-2 flex items-center gap-2 ${
+            className={`py-2 sm:py-2.5 px-2.5 sm:px-4 text-[11px] sm:text-xs font-bold rounded-t-xl transition border-b-2 flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'profile'
                 ? 'border-casino-gold text-casino-gold bg-slate-900/90'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <User className="w-4 h-4" />
-            <span>Profile & 3D Avatars</span>
+            <User className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Profile & 3D Avatars</span>
+            <span className="sm:hidden">Avatars</span>
           </button>
           <button
             onClick={() => setActiveTab('auth')}
-            className={`py-2.5 px-4 text-xs font-bold rounded-t-xl transition border-b-2 flex items-center gap-2 relative ${
+            className={`py-2 sm:py-2.5 px-2.5 sm:px-4 text-[11px] sm:text-xs font-bold rounded-t-xl transition border-b-2 flex items-center gap-1.5 whitespace-nowrap relative ${
               activeTab === 'auth'
                 ? 'border-casino-gold text-casino-gold bg-slate-900/90'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Sign-In & Security</span>
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sign-In & Security</span>
+            <span className="sm:hidden">Security</span>
             {authMethod === 'guest' && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute right-2 top-2" />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping absolute right-1.5 top-1.5" />
             )}
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`py-2.5 px-4 text-xs font-bold rounded-t-xl transition border-b-2 flex items-center gap-2 ${
+            className={`py-2 sm:py-2.5 px-2.5 sm:px-4 text-[11px] sm:text-xs font-bold rounded-t-xl transition border-b-2 flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'stats'
                 ? 'border-casino-gold text-casino-gold bg-slate-900/90'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            <BarChart3 className="w-4 h-4" />
-            <span>Player Stats & Dashboard</span>
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Player Stats & Dashboard</span>
+            <span className="sm:hidden">Stats</span>
           </button>
         </div>
 
@@ -541,34 +544,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         )}
 
         {/* Modal Scrollable Body - Single Unified Scrollbar with sleek look */}
-        <div className="p-6 overflow-y-auto max-h-[calc(92vh-170px)] space-y-6">
+        <div className="p-3.5 sm:p-6 overflow-y-auto max-h-[calc(92vh-130px)] sm:max-h-[calc(92vh-150px)] space-y-4 sm:space-y-6">
           
           {/* TAB 1: PROFILE & 3D AVATAR SELECTION */}
           {activeTab === 'profile' && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               
               {/* Profile Preview Card */}
-              <div className="bg-gradient-to-r from-emerald-950/60 via-slate-950 to-emerald-950/60 p-4 rounded-2xl border border-casino-gold/30 flex flex-wrap items-center justify-between gap-4 shadow-inner">
-                <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-emerald-950/60 via-slate-950 to-emerald-950/60 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-casino-gold/30 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3 text-center sm:text-left shadow-inner">
+                <div className="flex flex-col sm:flex-row items-center gap-3">
                   <div className="relative">
                     <img
                       src={selectedAvatar}
                       alt="Avatar preview"
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-2 ring-casino-gold shadow-gold"
+                      className="w-14 h-14 sm:w-18 sm:h-18 rounded-full object-cover ring-2 ring-casino-gold shadow-gold"
                     />
-                    <span className="absolute -bottom-1 -right-1 bg-casino-gold text-slate-950 text-[10px] font-black rounded-full px-2 shadow">
+                    <span className="absolute -bottom-1 -right-1 bg-casino-gold text-slate-950 text-[9px] sm:text-[10px] font-black rounded-full px-1.5 shadow">
                       VIP
                     </span>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-lg text-white">{alias || 'VIP Player'}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-casino-gold/20 text-casino-gold border border-casino-gold/40">
+                    <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
+                      <span className="font-bold text-base sm:text-lg text-white">{alias || 'VIP Player'}</span>
+                      <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-casino-gold/20 text-casino-gold border border-casino-gold/40">
                         {gender === 'male' ? '♂️ Male' : '♀️ Female'}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                    <div className="text-[11px] sm:text-xs text-slate-400 mt-1 flex items-center justify-center sm:justify-start gap-1.5">
                       {authMethod === 'google' && (
                         <span className="text-emerald-400 font-semibold flex items-center gap-1">
                           <ShieldCheck className="w-3.5 h-3.5" /> Google: {email || alias}
@@ -592,10 +595,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <button
                     type="button"
                     onClick={generateRandomGuest}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
+                    className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center gap-1.5 transition"
                     title="Roll a new random unique guest name & avatar"
                   >
-                    <Dice5 className="w-4 h-4 text-casino-gold" />
+                    <Dice5 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-casino-gold" />
                     <span>Random Alias</span>
                   </button>
                 </div>
@@ -656,7 +659,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <span className="text-[11px] text-slate-400">Click portrait to select</span>
                 </div>
 
-                <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3 bg-slate-950/70 p-2.5 sm:p-3.5 rounded-xl border border-slate-800">
                   {currentAvatars.map((url, idx) => {
                     const isSelected = selectedAvatar === url;
                     return (
@@ -670,7 +673,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             : 'hover:bg-slate-800 hover:scale-102 opacity-75 hover:opacity-100'
                         }`}
                       >
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-casino-gold/50 shadow">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border border-casino-gold/50 shadow">
                           <img
                             src={url}
                             alt={`Avatar ${idx + 1}`}
@@ -678,11 +681,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           />
                         </div>
                         {isSelected && (
-                          <div className="absolute top-1 right-1 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center shadow">
-                            <Check className="w-3 h-3 text-slate-950 font-bold" />
+                          <div className="absolute top-1 right-1 w-3.5 h-3.5 bg-amber-400 rounded-full flex items-center justify-center shadow">
+                            <Check className="w-2.5 h-2.5 text-slate-950 font-bold" />
                           </div>
                         )}
-                        <span className="text-[9px] text-slate-400 mt-1 font-mono">
+                        <span className="text-[8px] sm:text-[9px] text-slate-400 mt-1 font-mono">
                           #{idx + 1}
                         </span>
                       </button>
@@ -1054,8 +1057,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         </div>
 
         {/* Modal Footer / Save & Action Buttons */}
-        <div className="p-4 sm:p-5 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between gap-3">
-          <div className="text-xs text-slate-400 hidden sm:block">
+        <div className="p-3 sm:p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between gap-2">
+          <div className="text-[11px] text-slate-400 hidden sm:block truncate">
             {authMethod === 'guest' ? (
               <span>Guest session: <strong>{2 - Math.min(2, guestGamesPlayed)}</strong> matches remaining</span>
             ) : (
@@ -1063,20 +1066,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition"
             >
               Close
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="flex-1 sm:flex-initial px-6 py-2.5 bg-gradient-to-r from-casino-goldDark via-casino-gold to-casino-goldDark text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider shadow-gold hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-initial px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-casino-goldDark via-casino-gold to-casino-goldDark text-slate-950 font-bold rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-gold hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center gap-1.5"
             >
-              <Sparkles className="w-4 h-4 text-slate-950" />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 shrink-0" />
               <span>Save & Take Seat</span>
             </button>
           </div>

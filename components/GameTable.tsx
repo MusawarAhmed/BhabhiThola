@@ -26,6 +26,7 @@ import {
   X,
   Layers,
   User,
+  Users,
 } from 'lucide-react';
 import { ProfileModal, UserProfile } from './ProfileModal';
 
@@ -1080,13 +1081,13 @@ export const GameTable: React.FC<GameTableProps> = ({
               )}
             </div>
 
-            {/* ACTION BUTTONS ROW */}
-            <div className="flex items-center gap-3 sm:gap-4 mt-1">
+            {/* ACTION BUTTONS ROW - Responsive on 375px Mobile */}
+            <div className="flex items-center justify-center gap-1.5 sm:gap-3 mt-1 flex-wrap sm:flex-nowrap">
               <button
                 onClick={handlePlaySelectedCard}
                 disabled={!isMyTurn || gameState?.status !== 'in_progress' || Boolean(gameState?.trickResolving)}
                 className={`
-                  flex items-center gap-2 px-6 sm:px-8 py-2 rounded-full font-bold uppercase tracking-wider text-xs sm:text-sm shadow-gold transition-all duration-200
+                  flex items-center gap-1.5 px-4 sm:px-8 py-1.5 sm:py-2 rounded-full font-bold uppercase tracking-wider text-xs sm:text-sm shadow-gold transition-all duration-200
                   ${
                     isMyTurn && gameState?.status === 'in_progress' && !gameState?.trickResolving
                       ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 hover:brightness-110 active:scale-95 animate-pulse-subtle'
@@ -1094,24 +1095,33 @@ export const GameTable: React.FC<GameTableProps> = ({
                   }
                 `}
               >
-                <Play className="w-4 h-4 fill-current" />
-                <span>{gameState?.trickResolving ? 'Resolving Trick...' : 'Play Card'}</span>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{gameState?.trickResolving ? 'Resolving...' : 'Play Card'}</span>
               </button>
 
               <button
                 onClick={handleToggleSort}
-                className="flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-xs sm:text-sm shadow transition"
+                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
               >
-                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <ArrowLeftRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Sort Hand</span>
               </button>
 
               <button
                 onClick={() => setShowChatMobile((prev) => !prev)}
-                className="flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-xs sm:text-sm shadow transition"
+                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
               >
-                <MessageSquare className="w-3.5 h-3.5" />
+                <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Chat</span>
+              </button>
+
+              {/* Status Toggle on Mobile (< 1024px) */}
+              <button
+                onClick={() => setShowMatchStatusMobile((prev) => !prev)}
+                className="lg:hidden flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-emerald-500/60 text-emerald-400 font-semibold text-[11px] shadow transition whitespace-nowrap"
+              >
+                <Users className="w-3 h-3" />
+                <span>Status</span>
               </button>
             </div>
           </div>

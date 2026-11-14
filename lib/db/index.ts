@@ -12,6 +12,7 @@ let tablesInitialized = false;
 export async function ensureTablesExist() {
   if (!sql || tablesInitialized) return;
   try {
+    // 1. Create tables if not exist
     await sql`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
@@ -31,6 +32,16 @@ export async function ensureTablesExist() {
         updated_at TIMESTAMP DEFAULT NOW() NOT NULL
       );
     `;
+
+    // 2. Ensure all columns exist in case table was created earlier with fewer fields
+    try {
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS guest_games_played INTEGER DEFAULT 0;`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false;`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`;
+      await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`;
+    } catch {}
+
     await sql`
       CREATE TABLE IF NOT EXISTS rooms (
         id TEXT PRIMARY KEY,
@@ -49,6 +60,7 @@ export async function ensureTablesExist() {
         updated_at TIMESTAMP DEFAULT NOW() NOT NULL
       );
     `;
+
     await sql`
       CREATE TABLE IF NOT EXISTS players (
         id TEXT PRIMARY KEY,
