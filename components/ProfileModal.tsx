@@ -93,6 +93,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [verificationCode, setVerificationCode] = useState('');
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const [demoOtpHint, setDemoOtpHint] = useState('');
+  const [showGoogleSetupGuide, setShowGoogleSetupGuide] = useState(false);
   const [googleEmailInput, setGoogleEmailInput] = useState('');
   const [showGooglePrompt, setShowGooglePrompt] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -736,35 +737,83 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
 
                 <p className="text-xs text-slate-400">
-                  Instant 1-click verification with your Google account. Automatically saves your player profile and match history directly to the Neon PostgreSQL database.
+                  Connect your real Google account via official Google OAuth 2.0. Automatically imports your Google name, avatar photo, and syncs your stats directly to Neon PostgreSQL.
                 </p>
 
-                {!showGooglePrompt ? (
+                {/* 1. Official Google OAuth Redirect Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = '/api/auth/google/login';
+                  }}
+                  className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 transition shadow"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z" />
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.26v3.15C3.26 21.36 7.36 24 12 24z" />
+                    <path fill="#FBBC05" d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.26C.46 8.19 0 9.99 0 12s.46 3.81 1.26 5.41l4.02-3.15z" />
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.26 6.59l4.02 3.15c.95-2.84 3.6-4.99 6.72-4.99z" />
+                  </svg>
+                  <span>
+                    {authMethod === 'google' ? `✓ Connected as ${email || alias}` : 'Launch Google Account Picker (Official OAuth)'}
+                  </span>
+                </button>
+
+                {/* Sub-actions: Setup Guide & Manual Test fallback */}
+                <div className="flex items-center justify-between text-[11px] pt-1 px-1">
                   <button
                     type="button"
-                    onClick={() => {
-                      // If user has alias, suggest email
-                      const suggested = alias.startsWith('Guest-') ? '' : `${alias.toLowerCase().replace(/[^a-z0-9]/g, '')}@gmail.com`;
-                      setGoogleEmailInput(suggested);
-                      setShowGooglePrompt(true);
-                    }}
-                    disabled={isLoading}
-                    className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 transition shadow"
+                    onClick={() => setShowGoogleSetupGuide(!showGoogleSetupGuide)}
+                    className="text-casino-gold hover:underline flex items-center gap-1 font-medium"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z" />
-                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.26v3.15C3.26 21.36 7.36 24 12 24z" />
-                      <path fill="#FBBC05" d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.26C.46 8.19 0 9.99 0 12s.46 3.81 1.26 5.41l4.02-3.15z" />
-                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.26 6.59l4.02 3.15c.95-2.84 3.6-4.99 6.72-4.99z" />
-                    </svg>
-                    <span>
-                      {authMethod === 'google' ? `✓ Connected as ${email || alias}` : 'Sign In with Google'}
-                    </span>
+                    <span>⚙️ How to connect official Google Cloud Keys</span>
                   </button>
-                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowGooglePrompt(!showGooglePrompt)}
+                    className="text-slate-400 hover:text-slate-200"
+                  >
+                    {showGooglePrompt ? 'Hide manual test' : 'Quick test email'}
+                  </button>
+                </div>
+
+                {/* Google Cloud Console Setup Instructions */}
+                {showGoogleSetupGuide && (
+                  <div className="bg-slate-900/90 p-4 rounded-xl border border-casino-gold/40 text-xs text-slate-300 space-y-2">
+                    <div className="font-bold text-casino-gold flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-casino-gold" />
+                      <span>Connect Real Google OAuth in 3 Steps:</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-300">
+                      <li>
+                        Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-amber-400 underline">Google Cloud Console &rarr; Credentials</a> and click <strong>Create Credentials &rarr; OAuth client ID</strong>.
+                      </li>
+                      <li>
+                        Select Application type: <strong>Web application</strong>. Under <strong>Authorized redirect URIs</strong>, add:
+                        <code className="block bg-black px-2 py-1 rounded text-[10px] text-emerald-400 font-mono mt-1 select-all">
+                          https://bhabhithola.vercel.app/api/auth/google/callback
+                        </code>
+                        <code className="block bg-black px-2 py-1 rounded text-[10px] text-emerald-400 font-mono mt-0.5 select-all">
+                          https://bhabhithola-git-main-musawarahmeds-projects.vercel.app/api/auth/google/callback
+                        </code>
+                      </li>
+                      <li>
+                        In your <strong>Vercel Dashboard &rarr; Project Settings &rarr; Environment Variables</strong>, add:
+                        <div className="grid grid-cols-1 gap-1 text-[11px] font-mono text-amber-300 mt-1">
+                          <span>• GOOGLE_CLIENT_ID = your-client-id.apps.googleusercontent.com</span>
+                          <span>• GOOGLE_CLIENT_SECRET = your-client-secret</span>
+                          <span>• NEXT_PUBLIC_GOOGLE_CLIENT_ID = your-client-id.apps.googleusercontent.com</span>
+                        </div>
+                      </li>
+                    </ol>
+                  </div>
+                )}
+
+                {/* Manual Test Fallback Prompt */}
+                {showGooglePrompt && (
                   <div className="bg-slate-900 p-3.5 rounded-xl border border-slate-700 space-y-3">
                     <label className="block text-xs text-slate-300 font-semibold">
-                      Enter your Google / Gmail Address:
+                      Quick Test / Demo Google Email:
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
