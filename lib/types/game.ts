@@ -90,6 +90,8 @@ export interface GameState {
     penalizedPlayerName: string;
     cardsCount: number;
   } | null;
+  consecutiveTholaPlayerId?: string | null;
+  consecutiveTholaCount?: number;
 }
 
 // WebSocket / Action Message Types

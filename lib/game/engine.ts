@@ -134,6 +134,8 @@ export interface TrickResult {
   type: 'thola' | 'win';
   penalizedPlayerId?: string;
   penalizedPlayerName?: string;
+  tholaGiverPlayerId?: string;
+  tholaGiverPlayerName?: string;
   cardsAdded?: Card[];
   winnerPlayerId?: string;
   winnerPlayerName?: string;
@@ -142,11 +144,31 @@ export interface TrickResult {
 
 export function evaluateTrick(
   currentTrick: PlayedCard[],
-  suitLed: Suit
+  suitLed: Suit,
+  isFirstTrickOfGame: boolean = false
 ): TrickResult {
+  // CRITICAL OFFICIAL BHABHI RULE: First trick (Ace of Spades opening) CANNOT result in a Thulla!
+  // Any off-suit cards played in trick 1 are simply thrown away to the discard pile without penalty.
+  if (isFirstTrickOfGame) {
+    const suitCards = currentTrick.filter((p) => p.card.suit === suitLed);
+    let highestPlay = suitCards[0] || currentTrick[0];
+    for (const play of suitCards) {
+      if (play.card.value > highestPlay.card.value) {
+        highestPlay = play;
+      }
+    }
+    return {
+      type: 'win',
+      winnerPlayerId: highestPlay.playerId,
+      winnerPlayerName: highestPlay.playerName,
+      nextLeadPlayerId: highestPlay.playerId,
+    };
+  }
+
   const hasThola = currentTrick.some((p) => p.card.suit !== suitLed);
 
   if (hasThola) {
+    const tholaPlay = currentTrick.find((p) => p.card.suit !== suitLed);
     const suitCards = currentTrick.filter((p) => p.card.suit === suitLed);
     let highestPlay = suitCards[0];
     for (const play of suitCards) {
@@ -161,6 +183,8 @@ export function evaluateTrick(
       type: 'thola',
       penalizedPlayerId: highestPlay.playerId,
       penalizedPlayerName: highestPlay.playerName,
+      tholaGiverPlayerId: tholaPlay?.playerId,
+      tholaGiverPlayerName: tholaPlay?.playerName,
       cardsAdded: allCardsInTrick,
       nextLeadPlayerId: highestPlay.playerId,
     };

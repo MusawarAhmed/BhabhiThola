@@ -649,12 +649,12 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
       {/* Rules Modal */}
       {showRules && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border-2 border-casino-gold/60 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
+          <div className="bg-slate-900 border-2 border-casino-gold/60 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative max-h-[88vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4 sticky top-0 bg-slate-900 z-10">
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-casino-gold" />
                 <h3 className="font-serif font-bold text-lg text-gold-gradient">
-                  Bhabhi Thola Rules
+                  Official Bhabhi Thola Rules
                 </h3>
               </div>
               <button
@@ -667,45 +667,67 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
 
             <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
               <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <p className="font-bold text-casino-gold mb-1">1. The Opening Move (Ace of Spades)</p>
+                <p className="font-bold text-casino-gold mb-1">1. The Opening Move (Ace of Spades A♠)</p>
                 <p>
-                  52 cards are distributed among players. The player holding the <strong>Ace of Spades (A♠)</strong> MUST start the first trick by playing it!
+                  The player holding the <strong>Ace of Spades (A♠)</strong> MUST start the game by playing it.
+                </p>
+              </div>
+
+              <div className="bg-slate-950 p-3 rounded-xl border border-blue-900/40">
+                <p className="font-bold text-blue-400 mb-1">2. First Round Safety (Safe Opening)</p>
+                <p>
+                  In the very first trick (A♠ lead), if any player doesn&apos;t have a Spade, they can play any off-suit card safely. <strong>No Thola can happen in Trick 1!</strong> All played cards are sent to the discard pile, and the highest spade player leads Trick 2.
                 </p>
               </div>
 
               <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <p className="font-bold text-casino-gold mb-1">2. Must Follow Suit</p>
+                <p className="font-bold text-casino-gold mb-1">3. Must Follow Suit</p>
                 <p>
-                  Every player must play a card matching the suit led if they possess one. Higher card of the suit led wins the trick.
+                  In subsequent tricks, players MUST follow the suit led if they have a card of that suit. If all players follow suit, the highest card of the suit led wins, cards are cleared, and the winner leads the next trick.
                 </p>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <p className="font-bold text-red-400 mb-1">3. The &quot;Thola&quot; (Penalty Hit!)</p>
+              <div className="bg-slate-950 p-3 rounded-xl border border-red-900/40">
+                <p className="font-bold text-red-400 mb-1">4. The &quot;Thola&quot; (Penalty Hit!)</p>
                 <p>
-                  If a player does <strong>NOT</strong> have any card of the suit led, they can throw <strong>ANY</strong> card!
-                  This is a <strong>THOLA</strong>. The player who played the <strong>highest card of the original suit led</strong> takes ALL cards played in the trick into their hand!
+                  When a player has <strong>NO cards of the suit led</strong>, they can throw <strong>ANY</strong> card from their hand. This is a <strong>THOLA</strong>. The trick ends immediately, and the player who played the <strong>highest card of the led suit</strong> must pick up the entire trick into their hand!
                 </p>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <p className="font-bold text-emerald-400 mb-1">4. Clearing Hand & Becoming SAFE</p>
+              <div className="bg-slate-950 p-3 rounded-xl border border-amber-900/40">
+                <p className="font-bold text-amber-400 mb-1">5. Consecutive Thulla Relief (Taking Thullas Repeatedly)</p>
                 <p>
-                  As soon as you play your final card, you exit the table as <strong>SAFE</strong> (winner).
+                  To prevent an unfair endless loop when a player is repeatedly targeted with <strong>consecutive Tholas (2 in a row)</strong>:
+                  <br />• <strong>Card Relief:</strong> The victim draws 1 card from the next active player to diversify their suits.
+                  <br />• <strong>Lead Rotation:</strong> The lead passes to the player who gave the Thola (or next clockwise player) so the victim is not trapped leading again!
                 </p>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                <p className="font-bold text-amber-400 mb-1">5. The &quot;Bhabhi&quot; (Loser)</p>
+              <div className="bg-slate-950 p-3 rounded-xl border border-purple-900/40">
+                <p className="font-bold text-purple-400 mb-1">6. The &quot;Power Card&quot; Rule (Winning on Last Card)</p>
                 <p>
-                  The game continues until only <strong>ONE</strong> player remains holding cards. That last player is crowned the <strong>BHABHI</strong>!
+                  If you play your final card and that card happens to <strong>WIN the trick</strong> (highest card of suit led), you cannot escape yet! Because the winner holds the power and must lead the next trick, you must <strong>take 1 card from the next active player</strong> to your left (clockwise) and continue playing.
+                </p>
+              </div>
+
+              <div className="bg-slate-950 p-3 rounded-xl border border-emerald-900/40">
+                <p className="font-bold text-emerald-400 mb-1">7. Clearing Hand & Becoming SAFE</p>
+                <p>
+                  A player becomes <strong>SAFE</strong> (winner) when they run out of cards cleanly without winning the trick on their final card or taking a Thola.
+                </p>
+              </div>
+
+              <div className="bg-slate-950 p-3 rounded-xl border border-rose-900/40">
+                <p className="font-bold text-rose-400 mb-1">8. The &quot;Bhabhi&quot; (Loser)</p>
+                <p>
+                  Play continues until only <strong>ONE player</strong> remains holding cards. That last remaining player is the <strong>BHABHI</strong>!
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => setShowRules(false)}
-              className="mt-6 w-full py-2.5 bg-casino-gold text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider hover:opacity-90 transition"
+              className="mt-6 w-full py-2.5 bg-casino-gold text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider hover:opacity-90 transition shadow-gold"
             >
               Understood, Let&apos;s Play
             </button>

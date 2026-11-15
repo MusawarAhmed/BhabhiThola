@@ -491,7 +491,8 @@ export class RoomManager {
       (p) => (!p.isSafe && p.cards.length > 0) || session.state.currentTrick.some((tc) => tc.playerId === p.id)
     );
 
-    const hasTholaOccurred = session.state.suitLed && card.suit !== session.state.suitLed;
+    // In authentic Bhabhi rules: Round 1 (Ace of Spades opening) is safe; off-suit cards do NOT cause a Thulla!
+    const hasTholaOccurred = !session.state.isFirstTrickOfGame && session.state.suitLed && card.suit !== session.state.suitLed;
     const allPlayed = session.state.currentTrick.length >= eligibleToPlayThisTrick.length;
 
     if (hasTholaOccurred || allPlayed) {
@@ -581,8 +582,12 @@ export class RoomManager {
   private static resolveCurrentTrickWithPause(session: RoomSession) {
     if (!session.state.suitLed || session.state.currentTrick.length === 0) return;
 
-    // 1. Evaluate trick outcome
-    const result = evaluateTrick(session.state.currentTrick, session.state.suitLed);
+    // 1. Evaluate trick outcome (with First Trick safety check!)
+    const result = evaluateTrick(
+      session.state.currentTrick,
+      session.state.suitLed,
+      Boolean(session.state.isFirstTrickOfGame)
+    );
 
     // Enter resolving phase - all cards stay on table and turns are locked
     session.state.trickResolving = true;
@@ -593,6 +598,14 @@ export class RoomManager {
       if (!session.state.brokenSuits) session.state.brokenSuits = [];
       if (session.state.suitLed && !session.state.brokenSuits.includes(session.state.suitLed)) {
         session.state.brokenSuits.push(session.state.suitLed);
+      }
+
+      // Track consecutive Thullas on this player
+      if (session.state.consecutiveTholaPlayerId === result.penalizedPlayerId) {
+        session.state.consecutiveTholaCount = (session.state.consecutiveTholaCount || 1) + 1;
+      } else {
+        session.state.consecutiveTholaPlayerId = result.penalizedPlayerId;
+        session.state.consecutiveTholaCount = 1;
       }
 
       const penalizedPlayer = session.playersPrivate.get(result.penalizedPlayerId);
@@ -622,6 +635,10 @@ export class RoomManager {
         type: 'thola',
       });
     } else {
+      // Normal win: reset consecutive Thulla tracker
+      session.state.consecutiveTholaPlayerId = null;
+      session.state.consecutiveTholaCount = 0;
+
       const winningPlay = session.state.currentTrick
         .filter((tc) => tc.card.suit === session.state.suitLed)
         .sort((a, b) => b.card.value - a.card.value)[0];
@@ -663,8 +680,45 @@ export class RoomManager {
         session.state.discardPileCount += session.state.currentTrick.length;
       }
 
-      // CRITICAL: Check safe status FIRST before picking next lead!
-      // Anyone with 0 cards who didn't take penalty is officially SAFE (out of active play)!
+      // 1. AUTHENTIC BHABHI "POWER CARD" RULE:
+      // If a player played their final card and it was the WINNING CARD of the trick,
+      // they hold "the power" and cannot escape yet!
+      // They must take 1 card from the next active player to their left to continue playing!
+      if (result.type === 'win' && result.winnerPlayerId) {
+        const winner = session.playersPrivate.get(result.winnerPlayerId);
+        if (winner && winner.cards.length === 0) {
+          const donorId = getNextClockwiseLead(
+            Array.from(session.playersPrivate.values()),
+            winner.seat
+          );
+          const donor = donorId ? session.playersPrivate.get(donorId) : null;
+          if (donor && donor.cards.length > 0) {
+            // Take 1 random card from the next person
+            const randIdx = Math.floor(Math.random() * donor.cards.length);
+            const drawnCard = donor.cards.splice(randIdx, 1)[0];
+            donor.cardCount = donor.cards.length;
+
+            winner.cards = [drawnCard];
+            winner.cardCount = 1;
+            winner.isSafe = false;
+
+            session.state.logs.push({
+              id: 'log-' + Date.now() + Math.random(),
+              timestamp: Date.now(),
+              text: `🔄 POWER CARD RULE: ${winner.name} won the trick on their last card and cannot escape! Must take 1 card from ${donor.name}!`,
+              type: 'play',
+            });
+            RoomManager.sendChatMessage(
+              session.state.roomId,
+              'dealer',
+              `⚠️ ${winner.name} won the trick on their final card! In Bhabhi rules, you cannot escape on a power card—took 1 card from ${donor.name}!`
+            );
+          }
+        }
+      }
+
+      // 2. CHECK SAFE STATUS:
+      // Anyone with 0 cards who didn't take penalty and didn't trigger Power Card rule is officially SAFE!
       session.playersPrivate.forEach((p) => {
         if (p.cards.length === 0 && !p.isSafe) {
           p.isSafe = true;
@@ -707,7 +761,59 @@ export class RoomManager {
         let nextLeadId: string | null = null;
 
         if (result.type === 'thola' && result.penalizedPlayerId) {
-          nextLeadId = result.penalizedPlayerId;
+          const penalizedPlayer = session.playersPrivate.get(result.penalizedPlayerId);
+          const consecutiveCount = session.state.consecutiveTholaCount || 1;
+
+          // AUTHENTIC BHABHI THULLA RULE:
+          // If a player is hit by 2 or more consecutive Thullas (consistently taking thullas):
+          // Relief is triggered so they are not trapped in an endless loop:
+          // 1. The victim takes 1 card from the next person to alter and diversify their hand.
+          // 2. The lead passes to the next person (or the player who gave the Thulla).
+          if (consecutiveCount >= 2 && penalizedPlayer) {
+            const nextPersonId = getNextClockwiseLead(
+              Array.from(session.playersPrivate.values()),
+              penalizedPlayer.seat
+            );
+            const nextPerson = nextPersonId ? session.playersPrivate.get(nextPersonId) : null;
+
+            if (nextPerson && nextPerson.cards.length > 1) {
+              const randIdx = Math.floor(Math.random() * nextPerson.cards.length);
+              const reliefCard = nextPerson.cards.splice(randIdx, 1)[0];
+              nextPerson.cardCount = nextPerson.cards.length;
+              penalizedPlayer.cards = sortHand([...penalizedPlayer.cards, reliefCard]);
+              penalizedPlayer.cardCount = penalizedPlayer.cards.length;
+
+              session.state.logs.push({
+                id: 'log-' + Date.now() + Math.random(),
+                timestamp: Date.now(),
+                text: `🛡️ CONSECUTIVE THULA RELIEF: ${penalizedPlayer.name} took ${consecutiveCount} Thullas in a row! Took 1 card from ${nextPerson.name} for suit relief!`,
+                type: 'thola',
+              });
+            }
+
+            // Lead passes to the next person (or the player who gave the Thulla)
+            const tholaGiver = result.tholaGiverPlayerId ? session.playersPrivate.get(result.tholaGiverPlayerId) : null;
+            if (tholaGiver && !tholaGiver.isSafe && tholaGiver.cards.length > 0) {
+              nextLeadId = tholaGiver.id;
+            } else if (nextPersonId) {
+              nextLeadId = nextPersonId;
+            } else {
+              nextLeadId = result.penalizedPlayerId;
+            }
+
+            // Reset consecutive tracker after granting relief
+            session.state.consecutiveTholaPlayerId = null;
+            session.state.consecutiveTholaCount = 0;
+
+            RoomManager.sendChatMessage(
+              session.state.roomId,
+              'dealer',
+              `🛡️ ${penalizedPlayer.name} received consecutive Thullas! Relief rule: lead passes to ${session.playersPrivate.get(nextLeadId)?.name}!`
+            );
+          } else {
+            // First Thulla: penalized player leads normally
+            nextLeadId = result.penalizedPlayerId;
+          }
         } else {
           // Trick won normally: winner leads if they still have cards
           const winnerCandidate = session.playersPrivate.get(result.nextLeadPlayerId);
