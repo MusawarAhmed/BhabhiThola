@@ -387,17 +387,17 @@ export const CardView: React.FC<CardViewProps> = ({
 
   return (
     <div
-      onClick={isPlayable ? onClick : undefined}
+      onClick={onClick}
       className={`
         relative flex-shrink-0 ${sizeClasses[size]} ${cardSurfaceClass}
         border ${
           isSelected
-            ? 'border-amber-400 ring-[3px] ring-amber-400 shadow-[0_0_24px_rgba(251,191,36,0.95)] -translate-y-4 z-40'
+            ? 'border-amber-400 ring-[3px] ring-amber-400 shadow-[0_0_24px_rgba(251,191,36,0.95)] z-40 cursor-pointer'
             : isPlayable
-            ? `${borderClass} ring-1 ring-casino-gold/40 hover:-translate-y-3 hover:shadow-[0_6px_20px_rgba(212,175,55,0.5)] hover:z-30 cursor-pointer`
-            : `${borderClass} opacity-75 cursor-not-allowed hover:opacity-90`
+            ? `${borderClass} ring-1 ring-casino-gold/40 hover:-translate-y-2 hover:shadow-[0_6px_20px_rgba(212,175,55,0.5)] hover:z-30 cursor-pointer`
+            : `${borderClass} opacity-75 hover:opacity-90 cursor-pointer`
         }
-        transition-all duration-150 select-none flex flex-col justify-between p-1 sm:p-1.5 overflow-hidden
+        transition-all duration-200 select-none flex flex-col justify-between p-1 sm:p-1.5 overflow-hidden
         ${className}
       `}
     >

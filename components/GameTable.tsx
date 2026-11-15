@@ -140,6 +140,19 @@ export const GameTable: React.FC<GameTableProps> = ({
   const sseRef = useRef<EventSource | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const recordedRoundRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ cardId: string; y: number; x: number; time: number } | null>(null);
+  const touchedRecentlyRef = useRef<boolean>(false);
+
+  // Deselect card on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedCardId) {
+        setSelectedCardId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedCardId]);
 
   // Record Game Stats on Round/Game Completion
   useEffect(() => {
@@ -508,16 +521,89 @@ export const GameTable: React.FC<GameTableProps> = ({
 
   const handleCardClick = (card: Card, isPlayable: boolean) => {
     if (gameState?.trickResolving) return;
+
+    // 1. If this card is ALREADY SELECTED: clicking it again TOGGLES IT OFF (puts it back down in the hand)
+    if (selectedCardId === card.id) {
+      playSound('card');
+      setSelectedCardId(null);
+      return;
+    }
+
+    // 2. If the clicked card is not legally playable
     if (!isPlayable) {
-      setErrorMsg('You must follow suit or open with Ace of Spades (A♠)!');
+      // Put any previously raised card back down so user can reconsider freely
+      if (selectedCardId) {
+        setSelectedCardId(null);
+      }
+      playSound('card');
+
+      if (gameState?.isFirstTrickOfGame && !gameState?.suitLed) {
+        setErrorMsg('First turn must lead with the Ace of Spades (A♠)!');
+      } else if (gameState?.suitLed) {
+        setErrorMsg(`You must follow suit with ${SUIT_SYMBOLS[gameState.suitLed]} ${gameState.suitLed}!`);
+      } else if (!isMyTurn) {
+        setErrorMsg('Please wait for your turn to play.');
+      } else {
+        setErrorMsg('This card cannot be played right now.');
+      }
       setTimeout(() => setErrorMsg(null), 2500);
       return;
     }
-    if (selectedCardId === card.id) {
-      handlePlaySelectedCard();
-    } else {
-      playSound('card');
-      setSelectedCardId(card.id);
+
+    // 3. Card is playable: select it (switches smoothly from any previously selected card)
+    playSound('card');
+    setSelectedCardId(card.id);
+  };
+
+  const handleCardTouchStart = (card: Card, e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      touchStartRef.current = {
+        cardId: card.id,
+        y: e.touches[0].clientY,
+        x: e.touches[0].clientX,
+        time: Date.now(),
+      };
+    }
+  };
+
+  const handleCardTouchEnd = (card: Card, isPlayable: boolean, e: React.TouchEvent) => {
+    if (!touchStartRef.current || touchStartRef.current.cardId !== card.id) return;
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (e.changedTouches.length === 0) return;
+    const deltaY = e.changedTouches[0].clientY - start.y;
+    const deltaX = e.changedTouches[0].clientX - start.x;
+
+    touchedRecentlyRef.current = true;
+    setTimeout(() => {
+      touchedRecentlyRef.current = false;
+    }, 350);
+
+    // SWIPE DOWN (deltaY > 20px): Pull raised card back down into the hand / deselect
+    if (deltaY > 20 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      if (selectedCardId === card.id) {
+        playSound('card');
+        setSelectedCardId(null);
+      }
+      return;
+    }
+
+    // SWIPE UP (deltaY < -30px): Swipe card towards table to play it directly
+    if (deltaY < -30 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      if (isPlayable && isMyTurn && !gameState?.trickResolving) {
+        playSound('card');
+        dispatchAction({ type: 'PLAY_CARD', cardId: card.id });
+        setSelectedCardId(null);
+      } else {
+        handleCardClick(card, isPlayable);
+      }
+      return;
+    }
+
+    // Normal TAP: toggle selection or switch card
+    if (Math.abs(deltaY) < 15 && Math.abs(deltaX) < 15) {
+      handleCardClick(card, isPlayable);
     }
   };
 
@@ -562,6 +648,7 @@ export const GameTable: React.FC<GameTableProps> = ({
 
   const sortedHand = getSortedCards(gameState?.myCards || []);
   const cardCount = sortedHand.length;
+  const selectedCard = sortedHand.find((c) => c.id === selectedCardId);
 
   // Calculate dynamic negative margin (cards come closer together as count increases)
   // If 5 cards: -16px; if 13 cards: -36px; if 20 cards: -48px
@@ -868,7 +955,18 @@ export const GameTable: React.FC<GameTableProps> = ({
         </aside>
 
         {/* ----------------- CENTER: CASINO POKER TABLE & HAND ----------------- */}
-        <main className="flex-1 min-h-0 flex flex-col justify-between items-center relative overflow-visible px-2 sm:px-4 pt-7 sm:pt-9 pb-1">
+        <main
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (!target.closest('[data-card-item]') && !target.closest('[data-action-btn]')) {
+              if (selectedCardId) {
+                playSound('card');
+                setSelectedCardId(null);
+              }
+            }
+          }}
+          className="flex-1 min-h-0 flex flex-col justify-between items-center relative overflow-visible px-2 sm:px-4 pt-7 sm:pt-9 pb-1"
+        >
           {/* THE LUXURY OVAL TABLE WITH SAFE SIDEBAR CLEARANCE */}
           <div className="relative w-full max-w-[540px] md:max-w-[620px] lg:max-w-[680px] xl:max-w-[740px] h-[37vh] sm:h-[41vh] my-auto flex items-center justify-center">
             {/* Outer Wood Rail */}
@@ -1102,22 +1200,29 @@ export const GameTable: React.FC<GameTableProps> = ({
                   return (
                     <div
                       key={card.id}
+                      data-card-item="true"
+                      onTouchStart={(e) => handleCardTouchStart(card, e)}
+                      onTouchEnd={(e) => handleCardTouchEnd(card, isPlayable, e)}
                       style={{
                         marginLeft: idx === 0 ? 0 : `${dynamicOverlapMargin}px`,
                         transform: isSelected
-                          ? `translate3d(0, -24px, 0) rotate(0deg)`
+                          ? `translate3d(0, -32px, 0) scale(1.05) rotate(0deg)`
                           : `translate3d(0, ${yDrop}px, 0) rotate(${angle}deg)`,
                         transformOrigin: 'bottom center',
                         zIndex: isSelected ? 40 : idx + 1,
                       }}
-                      className="transition-transform duration-200 hover:-translate-y-4 hover:z-30 cursor-pointer flex-shrink-0"
+                      className="transition-all duration-200 hover:-translate-y-4 hover:z-30 cursor-pointer flex-shrink-0"
                     >
                       <CardView
                         card={card}
                         isPlayable={isPlayable}
                         isSelected={isSelected}
                         size="md"
-                        onClick={() => handleCardClick(card, isPlayable)}
+                        onClick={() => {
+                          if (!touchedRecentlyRef.current) {
+                            handleCardClick(card, isPlayable);
+                          }
+                        }}
                         className={
                           isSelected
                             ? 'ring-4 ring-amber-400 border-amber-300 shadow-[0_0_24px_rgba(251,191,36,0.95)]'
@@ -1139,7 +1244,7 @@ export const GameTable: React.FC<GameTableProps> = ({
             </div>
 
             {/* ACTION BUTTONS ROW - Responsive on 375px Mobile */}
-            <div className="flex items-center justify-center gap-1.5 sm:gap-3 mt-1 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-3 mt-1 flex-wrap sm:flex-nowrap" data-action-btn="true">
               <button
                 onClick={handlePlaySelectedCard}
                 disabled={!isMyTurn || gameState?.status !== 'in_progress' || Boolean(gameState?.trickResolving)}
@@ -1147,14 +1252,38 @@ export const GameTable: React.FC<GameTableProps> = ({
                   flex items-center gap-1.5 px-4 sm:px-8 py-1.5 sm:py-2 rounded-full font-bold uppercase tracking-wider text-xs sm:text-sm shadow-gold transition-all duration-200
                   ${
                     isMyTurn && gameState?.status === 'in_progress' && !gameState?.trickResolving
-                      ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 hover:brightness-110 active:scale-95 animate-pulse-subtle'
+                      ? selectedCardId
+                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 hover:brightness-110 active:scale-95 animate-pulse-subtle'
+                        : 'bg-amber-500/25 text-amber-200 border border-amber-400/50 hover:bg-amber-500/35'
                       : 'bg-amber-600/30 text-amber-200/50 cursor-not-allowed border border-amber-500/20'
                   }
                 `}
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{gameState?.trickResolving ? t.resolvingTrick : t.playCard}</span>
+                <span>
+                  {gameState?.trickResolving
+                    ? t.resolvingTrick
+                    : selectedCard
+                    ? `Play ${selectedCard.rank}${SUIT_SYMBOLS[selectedCard.suit]}`
+                    : t.playCard}
+                </span>
               </button>
+
+              {/* Quick Deselect Button (Visible when a card is selected) */}
+              {selectedCardId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSound('card');
+                    setSelectedCardId(null);
+                  }}
+                  className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-red-950/80 hover:bg-red-900 border border-red-500/60 text-red-200 font-semibold text-[11px] sm:text-xs shadow transition animate-fadeIn"
+                  title="Put card back down (or click the card again / swipe down / press Esc)"
+                >
+                  <X className="w-3.5 h-3.5 text-red-400" />
+                  <span>Deselect</span>
+                </button>
+              )}
 
               <button
                 onClick={handleToggleSort}
