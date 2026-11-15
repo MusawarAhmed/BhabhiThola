@@ -6,19 +6,29 @@ import {
   CasinoTheme,
   AnimationSettings,
   SiteEvent,
+  CardDesignSettings,
+  SiteLanguage,
   CASINO_THEMES,
   DEFAULT_ANIMATION_SETTINGS,
   DEFAULT_SITE_EVENT,
+  DEFAULT_CARD_DESIGN,
+  DEFAULT_SITE_LANGUAGE,
 } from './types';
+import { TRANSLATIONS, Translations } from '../i18n';
 
 interface ThemeContextType {
   themeId: ThemeId;
   theme: CasinoTheme;
   animationSettings: AnimationSettings;
   activeEvent: SiteEvent | null;
+  cardDesign: CardDesignSettings;
+  language: SiteLanguage;
+  t: Translations;
   setThemeId: (id: ThemeId) => void;
   setAnimationSettings: (settings: AnimationSettings) => void;
   setActiveEvent: (event: SiteEvent | null) => void;
+  setCardDesign: (design: CardDesignSettings) => void;
+  setLanguage: (lang: SiteLanguage) => void;
   refreshSettings: () => Promise<void>;
 }
 
@@ -27,9 +37,14 @@ const ThemeContext = createContext<ThemeContextType>({
   theme: CASINO_THEMES.emerald,
   animationSettings: DEFAULT_ANIMATION_SETTINGS,
   activeEvent: DEFAULT_SITE_EVENT,
+  cardDesign: DEFAULT_CARD_DESIGN,
+  language: DEFAULT_SITE_LANGUAGE,
+  t: TRANSLATIONS.en,
   setThemeId: () => {},
   setAnimationSettings: () => {},
   setActiveEvent: () => {},
+  setCardDesign: () => {},
+  setLanguage: () => {},
   refreshSettings: async () => {},
 });
 
@@ -37,6 +52,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [themeId, setThemeIdState] = useState<ThemeId>('emerald');
   const [animationSettings, setAnimationSettingsState] = useState<AnimationSettings>(DEFAULT_ANIMATION_SETTINGS);
   const [activeEvent, setActiveEventState] = useState<SiteEvent | null>(DEFAULT_SITE_EVENT);
+  const [cardDesign, setCardDesignState] = useState<CardDesignSettings>(DEFAULT_CARD_DESIGN);
+  const [language, setLanguageState] = useState<SiteLanguage>(DEFAULT_SITE_LANGUAGE);
 
   // Load local and remote settings on initial mount
   useEffect(() => {
@@ -55,6 +72,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const savedEvent = localStorage.getItem('bhabhi_site_event');
       if (savedEvent) {
         setActiveEventState(JSON.parse(savedEvent));
+      }
+
+      const savedCardDesign = localStorage.getItem('bhabhi_card_design');
+      if (savedCardDesign) {
+        setCardDesignState(JSON.parse(savedCardDesign));
+      }
+
+      const savedLang = localStorage.getItem('bhabhi_site_language') as SiteLanguage;
+      if (savedLang && TRANSLATIONS[savedLang]) {
+        setLanguageState(savedLang);
       }
     } catch {}
 
@@ -83,6 +110,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             localStorage.removeItem('bhabhi_site_event');
           }
         }
+        if (data.cardDesign) {
+          setCardDesignState(data.cardDesign);
+          localStorage.setItem('bhabhi_card_design', JSON.stringify(data.cardDesign));
+        }
+        if (data.language && TRANSLATIONS[data.language as SiteLanguage]) {
+          setLanguageState(data.language as SiteLanguage);
+          localStorage.setItem('bhabhi_site_language', data.language);
+        }
       }
     } catch {}
   };
@@ -106,7 +141,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const setCardDesign = (design: CardDesignSettings) => {
+    setCardDesignState(design);
+    localStorage.setItem('bhabhi_card_design', JSON.stringify(design));
+  };
+
+  const setLanguage = (lang: SiteLanguage) => {
+    setLanguageState(lang);
+    localStorage.setItem('bhabhi_site_language', lang);
+  };
+
   const theme = CASINO_THEMES[themeId] || CASINO_THEMES.emerald;
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
   return (
     <ThemeContext.Provider
@@ -115,9 +161,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         theme,
         animationSettings,
         activeEvent,
+        cardDesign,
+        language,
+        t,
         setThemeId,
         setAnimationSettings,
         setActiveEvent,
+        setCardDesign,
+        setLanguage,
         refreshSettings,
       }}
     >

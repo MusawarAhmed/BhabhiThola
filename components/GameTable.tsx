@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { ProfileModal, UserProfile } from './ProfileModal';
 import { useTheme } from '@/lib/theme/theme-context';
+import { LANGUAGE_LABELS } from '@/lib/i18n';
 
 interface GameTableProps {
   roomId: string;
@@ -117,7 +118,7 @@ export const GameTable: React.FC<GameTableProps> = ({
   playerAvatar,
   onLeave,
 }) => {
-  const { theme, animationSettings, activeEvent } = useTheme();
+  const { theme, animationSettings, activeEvent, cardDesign, language, setLanguage, t } = useTheme();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -708,15 +709,31 @@ export const GameTable: React.FC<GameTableProps> = ({
               }`}
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>{(gameState?.players.length || 0) >= 2 ? 'Deal' : `${gameState?.players.length || 1}/2+`}</span>
+              <span>{(gameState?.players.length || 0) >= 2 ? t.dealCards : `${gameState?.players.length || 1}/2+`}</span>
             </button>
           )}
+
+          {/* Quick Language Selector Dropdown */}
+          <div className="relative hidden md:block">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as any)}
+              className="appearance-none bg-slate-900/90 border border-slate-700 hover:border-casino-gold/60 text-slate-200 text-[11px] font-semibold rounded-full pl-2 pr-4 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-casino-gold transition shadow"
+              title="Change Language"
+            >
+              {Object.entries(LANGUAGE_LABELS).map(([code, meta]) => (
+                <option key={code} value={code} className="bg-slate-900 text-white">
+                  {meta.flag} {meta.nativeName}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <button
             onClick={onLeave}
             className="flex items-center gap-1.5 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 border border-red-400/50 text-white font-semibold px-3 py-1 rounded-xl text-xs shadow-md transition"
           >
-            <span className="hidden sm:inline">Leave Room</span>
+            <span className="hidden sm:inline">{t.leaveRoom}</span>
             <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -1130,7 +1147,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                 `}
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
-                <span>{gameState?.trickResolving ? 'Resolving...' : 'Play Card'}</span>
+                <span>{gameState?.trickResolving ? t.resolvingTrick : t.playCard}</span>
               </button>
 
               <button
@@ -1138,7 +1155,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                 className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
               >
                 <ArrowLeftRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>Sort Hand</span>
+                <span>{t.sortHand}</span>
               </button>
 
               <button
@@ -1146,7 +1163,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                 className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
               >
                 <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>Chat</span>
+                <span>{t.chat}</span>
               </button>
 
               {/* Status Toggle on Mobile (< 1024px) */}

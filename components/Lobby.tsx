@@ -18,6 +18,7 @@ import {
 import { DeckType } from '@/lib/types/game';
 import { ProfileModal, UserProfile } from './ProfileModal';
 import { useTheme } from '@/lib/theme/theme-context';
+import { LANGUAGE_LABELS } from '@/lib/i18n';
 
 interface LobbyProps {
   playerId: string;
@@ -34,7 +35,7 @@ interface RoomCodeDetectionResult {
 }
 
 export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
-  const { theme, activeEvent } = useTheme();
+  const { theme, activeEvent, language, setLanguage, t } = useTheme();
   const [playerName, setPlayerName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('/avatars/male_m1.jpg');
   const [gender, setGender] = useState<'male' | 'female'>('male');
@@ -349,7 +350,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
               className="flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 transition text-[11px] sm:text-xs font-bold shadow-gold whitespace-nowrap"
             >
               <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-              <span>Sign In</span>
+              <span>{t.signIn}</span>
             </button>
           ) : (
             <button
@@ -360,7 +361,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
               className="flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full border border-casino-gold/50 bg-slate-900/80 hover:bg-slate-800 text-casino-goldLight transition text-[11px] sm:text-xs font-semibold whitespace-nowrap"
             >
               <Crown className="w-3.5 h-3.5 text-casino-gold shrink-0" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <span className="hidden sm:inline">{t.dashboard}</span>
             </button>
           )}
 
@@ -370,8 +371,24 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
             title="Game Rules"
           >
             <HelpCircle className="w-3.5 h-3.5 text-casino-gold" />
-            <span className="hidden md:inline ml-1">Rules</span>
+            <span className="hidden md:inline ml-1">{t.gameRules}</span>
           </button>
+
+          {/* Quick Language Selector Dropdown */}
+          <div className="relative">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as any)}
+              className="appearance-none bg-slate-900/90 border border-slate-700 hover:border-casino-gold/60 text-slate-200 text-[11px] font-semibold rounded-full pl-2 sm:pl-2.5 pr-4 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-casino-gold transition shadow"
+              title="Select Site Language"
+            >
+              {Object.entries(LANGUAGE_LABELS).map(([code, meta]) => (
+                <option key={code} value={code} className="bg-slate-900 text-white">
+                  {meta.flag} {meta.nativeName}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Admin Studio Quick Entry */}
           <Link
@@ -380,7 +397,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
             title="Theme & Events Admin Studio (Passkey: admin777)"
           >
             <Sliders className="w-3.5 h-3.5 text-casino-gold" />
-            <span className="hidden lg:inline">Admin</span>
+            <span className="hidden lg:inline">{t.adminPortal}</span>
           </Link>
         </div>
       </header>
@@ -498,7 +515,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <span className="truncate">🃏 Single Deck (52)</span>
+                <span className="truncate">🃏 {t.deckTypeSingle}</span>
               </button>
               <button
                 type="button"
@@ -509,7 +526,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <span className="truncate">🂠 Double Deck (104)</span>
+                <span className="truncate">🂠 {t.deckTypeDouble}</span>
               </button>
             </div>
           </div>
@@ -522,7 +539,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
               className="w-full bg-gradient-to-r from-casino-goldDark via-casino-gold to-casino-goldDark text-slate-950 font-bold py-3.5 px-4 rounded-xl shadow-gold hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center gap-2 group text-sm uppercase tracking-wider"
             >
               <Sparkles className="w-4 h-4 text-slate-950" />
-              <span>{isCreating ? 'Opening Table...' : 'Create VIP Room'}</span>
+              <span>{isCreating ? 'Opening Table...' : t.createRoom}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
             </button>
 

@@ -6,7 +6,11 @@ import {
   ThemeId,
   DEFAULT_ANIMATION_SETTINGS,
   DEFAULT_SITE_EVENT,
+  DEFAULT_CARD_DESIGN,
+  DEFAULT_SITE_LANGUAGE,
   CASINO_THEMES,
+  CardDesignSettings,
+  SiteLanguage,
 } from '@/lib/theme/types';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +21,8 @@ const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || 'admin777';
 let cachedThemeId: ThemeId = 'emerald';
 let cachedAnimationSettings = DEFAULT_ANIMATION_SETTINGS;
 let cachedActiveEvent = DEFAULT_SITE_EVENT;
+let cachedCardDesign: CardDesignSettings = DEFAULT_CARD_DESIGN;
+let cachedLanguage: SiteLanguage = DEFAULT_SITE_LANGUAGE;
 
 export async function GET() {
   try {
@@ -34,6 +40,12 @@ export async function GET() {
           }
           if (row.key === 'event' && row.value !== undefined) {
             cachedActiveEvent = row.value as any;
+          }
+          if (row.key === 'card_design' && row.value) {
+            cachedCardDesign = row.value as any;
+          }
+          if (row.key === 'language' && row.value && (row.value as any).language) {
+            cachedLanguage = (row.value as any).language;
           }
         }
       } catch (dbErr) {
@@ -63,6 +75,8 @@ export async function GET() {
       themeId: cachedThemeId,
       animationSettings: cachedAnimationSettings,
       activeEvent: cachedActiveEvent,
+      cardDesign: cachedCardDesign,
+      language: cachedLanguage,
       stats: {
         totalUsers,
         totalRooms,
@@ -75,6 +89,8 @@ export async function GET() {
       themeId: cachedThemeId,
       animationSettings: cachedAnimationSettings,
       activeEvent: cachedActiveEvent,
+      cardDesign: cachedCardDesign,
+      language: cachedLanguage,
       stats: { totalUsers: 0, totalRooms: 0, totalGamesPlayed: 0 },
     });
   }
@@ -166,6 +182,95 @@ export async function POST(req: Request) {
       }
 
       return NextResponse.json({ success: true, activeEvent: newEvent });
+    }
+
+    // 4. UPDATE CARD DESIGN
+    if (body.action === 'UPDATE_CARD_DESIGN') {
+      const newDesign = body.cardDesign;
+      cachedCardDesign = newDesign;
+
+      if (db) {
+        try {
+          await db
+            .insert(siteSettings)
+            .values({ key: 'card_design', value: newDesign, updatedAt: new Date() })
+            .onConflictDoUpdate({
+              target: siteSettings.key,
+              set: { value: newDesign, updatedAt: new Date() },
+            });
+        } catch (dbErr) {
+          console.warn('DB save card design error:', dbErr);
+        }
+      }
+
+      return NextResponse.json({ success: true, cardDesign: newDesign });
+    }
+
+    // 5. UPDATE SITE LANGUAGE
+    if (body.action === 'UPDATE_LANGUAGE') {
+      const newLang = body.language as SiteLanguage;
+      cachedLanguage = newLang;
+
+      if (db) {
+        try {
+          await db
+            .insert(siteSettings)
+            .values({ key: 'language', value: { language: newLang }, updatedAt: new Date() })
+            .onConflictDoUpdate({
+              target: siteSettings.key,
+              set: { value: { language: newLang }, updatedAt: new Date() },
+            });
+        } catch (dbErr) {
+          console.warn('DB save language error:', dbErr);
+        }
+      }
+
+      return NextResponse.json({ success: true, language: newLang });
+    }
+
+    // 6. UPDATE ALL SETTINGS IN ONE MASTER SAVE (Global Apply)
+    if (body.action === 'UPDATE_ALL_SETTINGS') {
+      const { themeId, animationSettings, activeEvent, cardDesign, language } = body;
+
+      if (themeId && CASINO_THEMES[themeId as ThemeId]) cachedThemeId = themeId;
+      if (animationSettings) cachedAnimationSettings = animationSettings;
+      if (activeEvent !== undefined) cachedActiveEvent = activeEvent;
+      if (cardDesign) cachedCardDesign = cardDesign;
+      if (language) cachedLanguage = language;
+
+      if (db) {
+        try {
+          const updates = [
+            { key: 'theme', value: { themeId: cachedThemeId } },
+            { key: 'animations', value: cachedAnimationSettings },
+            { key: 'event', value: cachedActiveEvent },
+            { key: 'card_design', value: cachedCardDesign },
+            { key: 'language', value: { language: cachedLanguage } },
+          ];
+
+          for (const item of updates) {
+            await db
+              .insert(siteSettings)
+              .values({ key: item.key, value: item.value, updatedAt: new Date() })
+              .onConflictDoUpdate({
+                target: siteSettings.key,
+                set: { value: item.value, updatedAt: new Date() },
+              });
+          }
+        } catch (dbErr) {
+          console.warn('DB batch save error:', dbErr);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        themeId: cachedThemeId,
+        animationSettings: cachedAnimationSettings,
+        activeEvent: cachedActiveEvent,
+        cardDesign: cachedCardDesign,
+        language: cachedLanguage,
+        message: 'All settings updated and broadcasted globally',
+      });
     }
 
     return NextResponse.json({ success: false, error: 'Unknown action' }, { status: 400 });

@@ -1,5 +1,25 @@
 export type ThemeId = 'emerald' | 'crimson' | 'sapphire' | 'midnight' | 'obsidian';
 
+export type CardDeckStyle = 'classic-bicycle' | 'royal-gold' | 'modern-minimal' | 'cyber-neon';
+export type CardBackStyle = 'lattice-pattern' | 'imperial-ruby' | 'sapphire-yacht' | 'obsidian-dragon';
+export type SiteLanguage = 'en' | 'ur' | 'hi' | 'pa' | 'ar' | 'es';
+
+export interface CardDesignSettings {
+  deckStyle: CardDeckStyle;
+  backStyle: CardBackStyle;
+  cornerRankSize: 'normal' | 'large';
+  courtArtStyle: 'vintage-illustrated' | 'minimal-vector';
+}
+
+export const DEFAULT_CARD_DESIGN: CardDesignSettings = {
+  deckStyle: 'classic-bicycle',
+  backStyle: 'lattice-pattern',
+  cornerRankSize: 'normal',
+  courtArtStyle: 'vintage-illustrated',
+};
+
+export const DEFAULT_SITE_LANGUAGE: SiteLanguage = 'en';
+
 export interface CasinoTheme {
   id: ThemeId;
   name: string;
