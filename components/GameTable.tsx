@@ -608,7 +608,7 @@ export const GameTable: React.FC<GameTableProps> = ({
 
         {/* Center: Room Code Pill & Round Badge */}
         <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5 bg-[#0a1c14] border border-casino-gold/50 px-3 py-1 rounded-xl shadow-inner text-xs">
+          <div className="flex items-center gap-1.5 bg-black/50 border border-casino-gold/50 px-3 py-1 rounded-xl shadow-inner text-xs">
             <span className="text-slate-400 text-[11px] hidden sm:inline">Room Code:</span>
             <span className="font-mono font-bold text-casino-gold tracking-widest text-xs sm:text-sm">
               {roomCode}
@@ -622,7 +622,7 @@ export const GameTable: React.FC<GameTableProps> = ({
             </button>
           </div>
 
-          <div className="px-3.5 py-1 rounded-full bg-[#0a2318] border border-casino-gold/40 text-casino-goldLight font-medium text-xs shadow-inner">
+          <div className="px-3.5 py-1 rounded-full bg-black/50 border border-casino-gold/40 text-casino-goldLight font-medium text-xs shadow-inner">
             Round {gameState?.roundNumber || 1} / {gameState?.maxRounds || 5}
           </div>
 
@@ -638,7 +638,7 @@ export const GameTable: React.FC<GameTableProps> = ({
             className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold transition ${
               gameState?.deckType === 'double'
                 ? 'bg-amber-950/80 border-amber-400/80 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)]'
-                : 'bg-[#0a2318] border-casino-gold/40 text-casino-goldLight shadow-inner'
+                : 'bg-black/50 border-casino-gold/40 text-casino-goldLight shadow-inner'
             } ${
               isHost && (gameState?.status === 'waiting' || gameState?.status === 'game_over')
                 ? 'hover:brightness-125 cursor-pointer'
@@ -690,10 +690,10 @@ export const GameTable: React.FC<GameTableProps> = ({
           {isHost && (gameState?.players.length || 0) < (gameState?.maxPlayers || 4) && gameState?.status === 'waiting' && (
             <button
               onClick={() => dispatchAction({ type: 'ADD_BOT' })}
-              className="hidden sm:flex items-center gap-1 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/60 px-2.5 py-1 rounded-xl text-emerald-300 text-xs transition"
+              className="hidden sm:flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/50 px-2.5 py-1 rounded-xl text-casino-goldLight text-xs transition"
               title="Add AI Player"
             >
-              <Bot className="w-3.5 h-3.5" />
+              <Bot className="w-3.5 h-3.5 text-casino-gold" />
               <span>+ Bot ({gameState?.players.length || 0}/{gameState?.maxPlayers || 4})</span>
             </button>
           )}
@@ -767,8 +767,8 @@ export const GameTable: React.FC<GameTableProps> = ({
         <aside
           className={`
             fixed lg:static top-16 left-2 z-40 lg:z-10
-            w-48 xl:w-54 flex-shrink-0 bg-[#0a1f16]/95 lg:bg-[#0a1f16]/90 backdrop-blur-md
-            border border-emerald-700/40 rounded-2xl p-3
+            w-48 xl:w-54 flex-shrink-0 bg-slate-950/90 backdrop-blur-md
+            border border-slate-800 rounded-2xl p-3
             flex flex-col justify-between shadow-2xl
             transition-transform duration-300
             ${showMatchStatusMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -788,7 +788,7 @@ export const GameTable: React.FC<GameTableProps> = ({
             </div>
 
             {/* Status indicator */}
-            <div className="flex items-center gap-2 mb-3 bg-black/40 px-2.5 py-1.5 rounded-xl border border-emerald-900/60">
+            <div className="flex items-center gap-2 mb-3 bg-black/40 px-2.5 py-1.5 rounded-xl border border-slate-800">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
               <span className="text-[11px] font-semibold text-emerald-300 truncate">
                 {gameState?.status === 'in_progress'
@@ -822,7 +822,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                         : isCurrentTurn
                         ? 'bg-amber-500/20 border border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.2)]'
                         : isSelf
-                        ? 'bg-[#0f2e21] border border-emerald-700/40'
+                        ? 'bg-amber-500/10 border border-amber-400/40 text-amber-200'
                         : 'bg-black/30 border border-slate-800/60'
                     }`}
                   >
@@ -861,7 +861,7 @@ export const GameTable: React.FC<GameTableProps> = ({
             </div>
           </div>
 
-          <div className="text-[9px] text-slate-400 pt-2 border-t border-emerald-900/40 flex justify-between">
+          <div className="text-[9px] text-slate-400 pt-2 border-t border-slate-800 flex justify-between">
             <span>Room: {roomCode}</span>
             <span className="text-emerald-400 font-mono">Live</span>
           </div>
@@ -955,7 +955,13 @@ export const GameTable: React.FC<GameTableProps> = ({
                           );
                         })
                       ) : (
-                        <div className="w-16 h-22 sm:w-20 sm:h-28 rounded-xl border-2 border-dashed border-emerald-500/30 flex flex-col items-center justify-center text-emerald-400/40">
+                        <div
+                          className="w-16 h-22 sm:w-20 sm:h-28 rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-colors"
+                          style={{
+                            borderColor: `${theme.accentColor}55`,
+                            color: `${theme.accentColor}80`,
+                          }}
+                        >
                           <span className="text-xl sm:text-2xl">♠</span>
                           <span className="text-[9px] uppercase tracking-wider mt-1">Empty</span>
                         </div>
@@ -964,7 +970,7 @@ export const GameTable: React.FC<GameTableProps> = ({
 
                     {/* Glowing Golden Round Badge with Counter (Image 5 center "18" badge!) */}
                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-[#8a6813] via-[#f5d77f] to-[#aa8620] p-0.5 shadow-[0_0_15px_rgba(245,215,127,0.7)] flex items-center justify-center">
-                      <div className="w-full h-full rounded-full bg-[#0a1e16] flex items-center justify-center text-casino-gold font-bold font-serif text-xs sm:text-sm">
+                      <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-casino-gold font-bold font-serif text-xs sm:text-sm">
                         {gameState?.discardPileCount || gameState?.currentTrick.length || 0}
                       </div>
                     </div>
@@ -1043,7 +1049,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                     </span>
                   </div>
                 ) : (
-                  <div className="px-3.5 py-0.5 rounded-full bg-black/60 border border-emerald-900/60 text-slate-300 text-[11px] flex items-center gap-2 shadow">
+                  <div className="px-3.5 py-0.5 rounded-full bg-black/60 border border-slate-800 text-slate-300 text-[11px] flex items-center gap-2 shadow">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                     <span>
                       Waiting for{' '}
@@ -1152,7 +1158,7 @@ export const GameTable: React.FC<GameTableProps> = ({
 
               <button
                 onClick={handleToggleSort}
-                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
+                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
               >
                 <ArrowLeftRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>{t.sortHand}</span>
@@ -1160,7 +1166,7 @@ export const GameTable: React.FC<GameTableProps> = ({
 
               <button
                 onClick={() => setShowChatMobile((prev) => !prev)}
-                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
+                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
               >
                 <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>{t.chat}</span>
@@ -1169,7 +1175,7 @@ export const GameTable: React.FC<GameTableProps> = ({
               {/* Status Toggle on Mobile (< 1024px) */}
               <button
                 onClick={() => setShowMatchStatusMobile((prev) => !prev)}
-                className="lg:hidden flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#0a1e16] hover:bg-[#0f2e21] border border-emerald-500/60 text-emerald-400 font-semibold text-[11px] shadow transition whitespace-nowrap"
+                className="lg:hidden flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-[11px] shadow transition whitespace-nowrap"
               >
                 <Users className="w-3 h-3" />
                 <span>Status</span>
@@ -1182,14 +1188,14 @@ export const GameTable: React.FC<GameTableProps> = ({
         <aside
           className={`
             fixed lg:static top-16 right-2 z-40 lg:z-10
-            w-56 sm:w-64 xl:w-72 flex-shrink-0 bg-[#0a1f16]/95 lg:bg-[#0a1f16]/90 backdrop-blur-md
-            border border-emerald-700/40 rounded-2xl p-3
+            w-56 sm:w-64 xl:w-72 flex-shrink-0 bg-slate-950/90 backdrop-blur-md
+            border border-slate-800 rounded-2xl p-3
             flex flex-col justify-between shadow-2xl h-[80vh] lg:h-auto
             transition-transform duration-300
             ${showChatMobile ? 'translate-x-0' : 'translate-x-[110%] lg:translate-x-0'}
           `}
         >
-          <div className="flex justify-between items-center pb-2 border-b border-emerald-900/60 flex-shrink-0">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-800 flex-shrink-0">
             <div className="flex items-center gap-1.5">
               <MessageSquare className="w-4 h-4 text-casino-gold" />
               <h3 className="text-xs font-bold text-white">Chat</h3>
@@ -1223,7 +1229,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                     className={`max-w-[78%] rounded-xl p-2 ${
                       isSelf
                         ? 'bg-amber-500/20 border border-amber-400/50 text-amber-100 rounded-tr-none'
-                        : 'bg-black/50 border border-emerald-800/40 text-slate-200 rounded-tl-none'
+                        : 'bg-black/50 border border-slate-800 text-slate-200 rounded-tl-none'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1 mb-0.5">
@@ -1240,7 +1246,7 @@ export const GameTable: React.FC<GameTableProps> = ({
           </div>
 
           {/* Emoji Reactions Row */}
-          <div className="pt-2 border-t border-emerald-900/60 flex-shrink-0">
+          <div className="pt-2 border-t border-slate-800 flex-shrink-0">
             <div className="flex justify-between items-center px-1 mb-2">
               {['👍', '❤️', '🔥', '😂', '👏'].map((emoji) => (
                 <button
@@ -1260,7 +1266,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Type a message..."
                 maxLength={80}
-                className="flex-1 bg-black/60 border border-emerald-800 focus:border-casino-gold rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-casino-gold/50"
+                className="flex-1 bg-black/60 border border-slate-700 focus:border-casino-gold rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-casino-gold/50"
               />
               <button
                 type="submit"
@@ -1466,10 +1472,10 @@ const EmptySeatPlaceholder: React.FC<{ onAddBot: () => void }> = ({ onAddBot }) 
       className="flex flex-col items-center group opacity-85 hover:opacity-100 transition cursor-pointer"
       title="Host: Add Bot to Seat"
     >
-      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-emerald-400/60 bg-black/50 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition shadow-lg">
+      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-amber-400/60 bg-black/60 flex items-center justify-center text-amber-300 group-hover:scale-105 transition shadow-lg">
         <Bot className="w-4 h-4 text-casino-gold" />
       </div>
-      <div className="mt-0.5 bg-black/75 border border-slate-700 px-1.5 py-0.2 rounded-full text-[8px] text-emerald-300 font-semibold shadow">
+      <div className="mt-0.5 bg-black/80 border border-amber-400/40 px-1.5 py-0.2 rounded-full text-[8px] text-amber-300 font-semibold shadow">
         + Add Bot
       </div>
     </button>
@@ -1479,11 +1485,11 @@ const EmptySeatPlaceholder: React.FC<{ onAddBot: () => void }> = ({ onAddBot }) 
 // Non-host (Guest) players: Display open seat with NO bot buttons or options
 const EmptySeatWaiting: React.FC = () => {
   return (
-    <div className="flex flex-col items-center opacity-60 pointer-events-none select-none">
-      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-dashed border-emerald-500/35 bg-black/35 flex items-center justify-center text-emerald-400/40 shadow-inner">
+    <div className="flex flex-col items-center opacity-50 pointer-events-none select-none">
+      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full border border-dashed border-slate-700 bg-black/40 flex items-center justify-center text-slate-500 shadow-inner">
         <span className="text-xs">♠</span>
       </div>
-      <div className="mt-0.5 bg-black/45 border border-slate-800 px-1.5 py-0.2 rounded-full text-[8px] text-slate-400 font-mono">
+      <div className="mt-0.5 bg-black/60 border border-slate-800 px-1.5 py-0.2 rounded-full text-[8px] text-slate-500 font-mono">
         Open Seat
       </div>
     </div>

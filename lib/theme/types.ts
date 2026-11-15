@@ -1,7 +1,20 @@
 export type ThemeId = 'emerald' | 'crimson' | 'sapphire' | 'midnight' | 'obsidian';
 
-export type CardDeckStyle = 'classic-bicycle' | 'royal-gold' | 'modern-minimal' | 'cyber-neon';
-export type CardBackStyle = 'lattice-pattern' | 'imperial-ruby' | 'sapphire-yacht' | 'obsidian-dragon';
+export type CardDeckStyle =
+  | 'vintage-ivory'       // Image 4: Antique Victorian Parchment / Cream Damask
+  | 'midnight-sapphire'   // Image 3: Midnight Navy Blue & Filigree Gold
+  | 'obsidian-gold'       // Image 5: Stealth Obsidian Matte Black & Gold Foil
+  | 'classic-bicycle'     // Classic Vegas Linen White
+  | 'royal-gold'          // Monaco Gold Foil Luxe
+  | 'cyber-neon';         // Cyberpunk Neon
+
+export type CardBackStyle =
+  | 'vintage-navy-cartouche' // Image 4 bottom-right
+  | 'sapphire-baroque'       // Image 3 bottom-right
+  | 'obsidian-mandala'       // Image 5 bottom-right
+  | 'lattice-pattern'        // Classic Bavarian Lattice
+  | 'imperial-ruby';
+
 export type SiteLanguage = 'en' | 'ur' | 'hi' | 'pa' | 'ar' | 'es';
 
 export interface CardDesignSettings {
@@ -12,8 +25,8 @@ export interface CardDesignSettings {
 }
 
 export const DEFAULT_CARD_DESIGN: CardDesignSettings = {
-  deckStyle: 'classic-bicycle',
-  backStyle: 'lattice-pattern',
+  deckStyle: 'vintage-ivory',
+  backStyle: 'vintage-navy-cartouche',
   cornerRankSize: 'normal',
   courtArtStyle: 'vintage-illustrated',
 };

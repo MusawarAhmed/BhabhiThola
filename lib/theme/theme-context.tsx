@@ -87,6 +87,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     // 2. Fetch server-persisted settings from DB
     refreshSettings();
+
+    // 3. Periodic polling every 3.5s so all game tables and lobby sync with admin changes in real time
+    const pollInterval = setInterval(() => {
+      refreshSettings();
+    }, 3500);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const refreshSettings = async () => {
