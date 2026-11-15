@@ -75,6 +75,26 @@ export async function ensureTablesExist() {
         joined_at TIMESTAMP DEFAULT NOW() NOT NULL
       );
     `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        key VARCHAR(50) PRIMARY KEY,
+        value JSONB NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        title VARCHAR(150) NOT NULL,
+        tag VARCHAR(50) DEFAULT 'EVENT' NOT NULL,
+        description TEXT NOT NULL,
+        glow_color VARCHAR(30) DEFAULT 'gold' NOT NULL,
+        is_active BOOLEAN DEFAULT true NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+    `;
     tablesInitialized = true;
   } catch (err) {
     console.error('Failed to auto-ensure tables in Neon:', err);

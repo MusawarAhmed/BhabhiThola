@@ -29,6 +29,7 @@ import {
   Users,
 } from 'lucide-react';
 import { ProfileModal, UserProfile } from './ProfileModal';
+import { useTheme } from '@/lib/theme/theme-context';
 
 interface GameTableProps {
   roomId: string;
@@ -116,6 +117,7 @@ export const GameTable: React.FC<GameTableProps> = ({
   playerAvatar,
   onLeave,
 }) => {
+  const { theme, animationSettings, activeEvent } = useTheme();
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -568,7 +570,19 @@ export const GameTable: React.FC<GameTableProps> = ({
       : Math.min(-14, Math.max(-50, Math.floor(-14 - (cardCount - 3) * 2.8)));
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden bg-[radial-gradient(ellipse_at_center,_#0a2318_0%,_#05150e_60%,_#020b07_100%)] text-slate-100 flex flex-col justify-between select-none relative font-sans">
+    <div className={`h-screen max-h-screen overflow-hidden bg-gradient-to-b ${theme.bgGradient} text-slate-100 flex flex-col justify-between select-none relative font-sans transition-colors duration-500`}>
+      {/* Live Event Announcement Broadcast Banner */}
+      {activeEvent && activeEvent.isActive && (
+        <div className="z-20 bg-gradient-to-r from-amber-500/20 via-yellow-500/25 to-amber-500/20 border-b border-amber-400/40 px-3 py-1 flex items-center justify-center gap-2 text-[11px] text-amber-200 backdrop-blur-md animate-fadeIn">
+          <Sparkles className="w-3 h-3 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
+          <span className="font-mono text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-400 text-slate-950">
+            {activeEvent.tag || 'EVENT'}
+          </span>
+          <span className="font-semibold">{activeEvent.title}:</span>
+          <span className="text-amber-100/80 hidden sm:inline">{activeEvent.description}</span>
+        </div>
+      )}
+
       {/* ===================== TOP HEADER ===================== */}
       <header className="h-13 flex-shrink-0 z-20 px-3 sm:px-6 py-2 flex justify-between items-center border-b border-casino-gold/25 bg-black/45 backdrop-blur-md">
         {/* Left: Royal Logo (Two Cards + Gold Serif Title) */}
@@ -841,11 +855,28 @@ export const GameTable: React.FC<GameTableProps> = ({
           {/* THE LUXURY OVAL TABLE WITH SAFE SIDEBAR CLEARANCE */}
           <div className="relative w-full max-w-[540px] md:max-w-[620px] lg:max-w-[680px] xl:max-w-[740px] h-[37vh] sm:h-[41vh] my-auto flex items-center justify-center">
             {/* Outer Wood Rail */}
-            <div className="w-full h-full rounded-[140px] sm:rounded-[180px] p-2 sm:p-3 bg-gradient-to-b from-[#5c3014] via-[#331606] to-[#1a0902] shadow-[0_12px_40px_rgba(0,0,0,0.85)] border-2 border-[#804a1f] relative flex items-center justify-center">
-              {/* Inner Gold Rim */}
-              <div className="w-full h-full rounded-[130px] sm:rounded-[170px] p-1.5 sm:p-2 bg-gradient-to-r from-[#d4af37] via-[#f5d77f] to-[#aa8620] shadow-inner flex items-center justify-center">
-                {/* Emerald Green Felt */}
-                <div className="w-full h-full rounded-[122px] sm:rounded-[162px] bg-[radial-gradient(ellipse_at_center,_#0f5a36_0%,_#073b22_60%,_#032112_100%)] relative flex items-center justify-center overflow-hidden border border-emerald-800 shadow-[inset_0_0_50px_rgba(0,0,0,0.7)]">
+            <div
+              className="w-full h-full rounded-[140px] sm:rounded-[180px] p-2 sm:p-3 shadow-[0_12px_40px_rgba(0,0,0,0.85)] border-2 relative flex items-center justify-center transition-all duration-500"
+              style={{
+                background: theme.railStyle,
+                borderColor: theme.railBorder,
+                boxShadow: animationSettings.ambientGlow === 'cinematic' ? theme.glowShadow : '0 12px 40px rgba(0,0,0,0.85)',
+              }}
+            >
+              {/* Inner Gold / Accent Rim */}
+              <div
+                className="w-full h-full rounded-[130px] sm:rounded-[170px] p-1.5 sm:p-2 shadow-inner flex items-center justify-center transition-all duration-500"
+                style={{
+                  background: theme.goldTrim,
+                }}
+              >
+                {/* Casino Felt */}
+                <div
+                  className="w-full h-full rounded-[122px] sm:rounded-[162px] relative flex items-center justify-center overflow-hidden border border-black/40 shadow-[inset_0_0_50px_rgba(0,0,0,0.7)] transition-all duration-500"
+                  style={{
+                    background: theme.feltStyle,
+                  }}
+                >
                   {/* Subtle Diamond Suit Watermark */}
                   <div
                     className="absolute inset-0 opacity-10 pointer-events-none"
@@ -854,7 +885,10 @@ export const GameTable: React.FC<GameTableProps> = ({
                       backgroundSize: '16px 16px',
                     }}
                   />
-                  <div className="absolute inset-3 sm:inset-5 rounded-[105px] sm:rounded-[145px] border border-emerald-400/25 pointer-events-none" />
+                  <div
+                    className="absolute inset-3 sm:inset-5 rounded-[105px] sm:rounded-[145px] border pointer-events-none transition-colors duration-500"
+                    style={{ borderColor: `${theme.accentColor}40` }}
+                  />
 
                   {/* AUTOMATED CARD SHUFFLER & DEALER MACHINE ANIMATION */}
                   <DealerMachine

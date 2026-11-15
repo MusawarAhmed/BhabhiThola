@@ -49,9 +49,27 @@ export const players = pgTable('players', {
   joinedAt: timestamp('joined_at').defaultNow().notNull(),
 });
 
+export const siteSettings = pgTable('site_settings', {
+  key: varchar('key', { length: 50 }).primaryKey(),
+  value: jsonb('value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const events = pgTable('events', {
+  id: text('id').primaryKey(),
+  title: varchar('title', { length: 150 }).notNull(),
+  tag: varchar('tag', { length: 50 }).default('EVENT').notNull(),
+  description: text('description').notNull(),
+  glowColor: varchar('glow_color', { length: 30 }).default('gold').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export type DbUser = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Room = typeof rooms.$inferSelect;
 export type NewRoom = typeof rooms.$inferInsert;
 export type DbPlayer = typeof players.$inferSelect;
 export type NewPlayer = typeof players.$inferInsert;
+export type DbSiteSetting = typeof siteSettings.$inferSelect;
+export type DbEvent = typeof events.$inferSelect;
