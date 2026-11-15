@@ -533,6 +533,19 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
                     {
+                      id: 'noir-gold' as CardDeckStyle,
+                      backId: 'noir-art-deco' as CardBackStyle,
+                      title: 'Art Deco Noir Gold & Velvet',
+                      reference: 'Uploaded Reference Sheet',
+                      badge: 'AUTHENTIC SLICED DECK',
+                      desc: 'Matte obsidian slate card faces with metallic gold foil Spades, crimson Hearts/Diamonds, crisp silver Clubs, and authentic Art Deco geometric labyrinth gold back.',
+                      sampleCards: [
+                        { id: 'ng_a', suit: 'SPADES', rank: 'A', value: 14 },
+                        { id: 'ng_k', suit: 'HEARTS', rank: 'K', value: 13 },
+                        { id: 'ng_7', suit: 'CLUBS', rank: '7', value: 7 },
+                      ] as Card[],
+                    },
+                    {
                       id: 'vintage-ivory' as CardDeckStyle,
                       backId: 'vintage-navy-cartouche' as CardBackStyle,
                       title: 'Antique Victorian Parchment',

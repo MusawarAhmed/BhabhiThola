@@ -282,8 +282,24 @@ export const CardView: React.FC<CardViewProps> = ({
     lg: 'w-20 h-28 sm:w-24 sm:h-36 text-sm sm:text-base rounded-xl',
   };
 
-  // ---------------- FACE DOWN CARDS (IMAGE 3, 4, 5 AUTHENTIC CARD BACKS) ----------------
+  // ---------------- FACE DOWN CARDS (IMAGE 3, 4, 5 & NOIR GOLD AUTHENTIC CARD BACKS) ----------------
   if (isFaceDown || !card) {
+    // 0. Art Deco Geometric Gold Labyrinth (from User Reference Image)
+    if (backStyle === 'noir-art-deco' || deckStyle === 'noir-gold') {
+      return (
+        <div
+          className={`relative flex-shrink-0 ${sizeClasses[size]} rounded-md sm:rounded-lg overflow-hidden border border-amber-400/80 shadow-card flex items-center justify-center select-none bg-[#090b0e] ${className}`}
+        >
+          <img
+            src="/cards/noir-gold/card-back.png"
+            alt="Art Deco Noir Back"
+            className="w-full h-full object-cover rounded-md sm:rounded-lg pointer-events-none"
+            draggable={false}
+          />
+        </div>
+      );
+    }
+
     // 1. Image 4 bottom-right: Vintage Navy Cartouche with Baroque Gold Frame
     if (backStyle === 'vintage-navy-cartouche') {
       return (
@@ -357,6 +373,35 @@ export const CardView: React.FC<CardViewProps> = ({
             ♠
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // ---------------- NOIR GOLD AUTHENTIC SLICED DECK (USER REFERENCE IMAGE) ----------------
+  if (deckStyle === 'noir-gold' && card) {
+    const imgSrc = `/cards/noir-gold/${card.suit}-${card.rank}.png`;
+    return (
+      <div
+        onClick={onClick}
+        className={`
+          relative flex-shrink-0 ${sizeClasses[size]} rounded-md sm:rounded-lg
+          border ${
+            isSelected
+              ? 'border-amber-400 ring-[3px] ring-amber-400 shadow-[0_0_24px_rgba(251,191,36,0.95)] z-40 cursor-pointer'
+              : isPlayable
+              ? 'border-amber-400/90 ring-1 ring-casino-gold/50 shadow-[0_4px_16px_rgba(0,0,0,0.8)] hover:-translate-y-2 hover:shadow-[0_6px_20px_rgba(212,175,55,0.6)] hover:z-30 cursor-pointer'
+              : 'border-slate-800 shadow-[0_4px_10px_rgba(0,0,0,0.5)] opacity-75 hover:opacity-90 cursor-pointer'
+          }
+          transition-all duration-200 select-none overflow-hidden bg-[#0d0f12]
+          ${className}
+        `}
+      >
+        <img
+          src={imgSrc}
+          alt={`${card.rank} of ${card.suit}`}
+          className="w-full h-full object-cover rounded-md sm:rounded-lg pointer-events-none"
+          draggable={false}
+        />
       </div>
     );
   }

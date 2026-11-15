@@ -30,3 +30,7 @@ next-env.d.ts
 
 # Neon
 .neon
+
+# Scratch
+scratch/
+

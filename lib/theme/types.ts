@@ -1,6 +1,7 @@
 export type ThemeId = 'emerald' | 'crimson' | 'sapphire' | 'midnight' | 'obsidian';
 
 export type CardDeckStyle =
+  | 'noir-gold'           // Art Deco Noir & Gold Foil (User Image)
   | 'vintage-ivory'       // Image 4: Antique Victorian Parchment / Cream Damask
   | 'midnight-sapphire'   // Image 3: Midnight Navy Blue & Filigree Gold
   | 'obsidian-gold'       // Image 5: Stealth Obsidian Matte Black & Gold Foil
@@ -9,6 +10,7 @@ export type CardDeckStyle =
   | 'cyber-neon';         // Cyberpunk Neon
 
 export type CardBackStyle =
+  | 'noir-art-deco'          // Art Deco Geometric Gold Labyrinth (User Image)
   | 'vintage-navy-cartouche' // Image 4 bottom-right
   | 'sapphire-baroque'       // Image 3 bottom-right
   | 'obsidian-mandala'       // Image 5 bottom-right
@@ -25,8 +27,8 @@ export interface CardDesignSettings {
 }
 
 export const DEFAULT_CARD_DESIGN: CardDesignSettings = {
-  deckStyle: 'vintage-ivory',
-  backStyle: 'vintage-navy-cartouche',
+  deckStyle: 'noir-gold',
+  backStyle: 'noir-art-deco',
   cornerRankSize: 'normal',
   courtArtStyle: 'vintage-illustrated',
 };

@@ -121,6 +121,7 @@ export const GameTable: React.FC<GameTableProps> = ({
 }) => {
   const { theme, animationSettings, activeEvent, cardDesign, language, setLanguage, t } = useTheme();
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const lastStateJsonRef = useRef<string>('');
   const [wsConnected, setWsConnected] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -330,6 +331,7 @@ export const GameTable: React.FC<GameTableProps> = ({
       );
       const data = await res.json();
       if (data.state) {
+        lastStateJsonRef.current = JSON.stringify(data.state);
         setGameState(data.state);
         setWsConnected(true);
       }
@@ -342,7 +344,11 @@ export const GameTable: React.FC<GameTableProps> = ({
   const handleServerMessage = useCallback(
     (msg: ServerMessage) => {
       if (msg.type === 'STATE_UPDATE' && msg.state) {
-        setGameState(msg.state);
+        const serialized = JSON.stringify(msg.state);
+        if (serialized !== lastStateJsonRef.current) {
+          lastStateJsonRef.current = serialized;
+          setGameState(msg.state);
+        }
 
         if (msg.tholaInfo) {
           playSound('thola');
@@ -433,7 +439,11 @@ export const GameTable: React.FC<GameTableProps> = ({
         .then((r) => r.json())
         .then((data) => {
           if (data.state) {
-            setGameState(data.state);
+            const serialized = JSON.stringify(data.state);
+            if (serialized !== lastStateJsonRef.current) {
+              lastStateJsonRef.current = serialized;
+              setGameState(data.state);
+            }
             setWsConnected(true);
           }
         })
@@ -502,6 +512,7 @@ export const GameTable: React.FC<GameTableProps> = ({
       });
       const data = await res.json();
       if (data.state) {
+        lastStateJsonRef.current = JSON.stringify(data.state);
         setGameState(data.state);
       }
       if (data.error) {
@@ -1261,7 +1272,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                   </div>
                 ) : (
                   <div className="px-3.5 py-0.5 rounded-full bg-black/60 border border-slate-800 text-slate-300 text-[11px] flex items-center gap-2 shadow">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
                     <span>
                       Waiting for{' '}
                       <strong className="text-casino-gold">
