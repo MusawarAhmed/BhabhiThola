@@ -129,6 +129,8 @@ export const GameTable: React.FC<GameTableProps> = ({
   const [showMatchStatusMobile, setShowMatchStatusMobile] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+  const lastReadCountRef = useRef<number>(0);
   const [chatInput, setChatInput] = useState('');
   const [sortMode, setSortMode] = useState<'suit' | 'rank'>('suit');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -155,6 +157,18 @@ export const GameTable: React.FC<GameTableProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedCardId]);
+
+  // Track unread chat messages for mobile notification badge
+  useEffect(() => {
+    const totalMsgs = gameState?.chatMessages?.length || 0;
+    if (showChatMobile) {
+      lastReadCountRef.current = totalMsgs;
+      setUnreadChatCount(0);
+    } else {
+      const diff = totalMsgs - lastReadCountRef.current;
+      setUnreadChatCount(diff > 0 ? diff : 0);
+    }
+  }, [gameState?.chatMessages, showChatMobile]);
 
   // Record Game Stats on Round/Game Completion
   useEffect(() => {
@@ -660,179 +674,173 @@ export const GameTable: React.FC<GameTableProps> = ({
       : Math.min(-14, Math.max(-50, Math.floor(-14 - (cardCount - 3) * 2.8)));
 
   return (
-    <div className={`h-screen max-h-screen overflow-hidden bg-gradient-to-b ${theme.bgGradient} text-slate-100 flex flex-col justify-between select-none relative font-sans transition-colors duration-500`}>
+    <div className={`h-[100dvh] max-h-[100dvh] w-full overflow-hidden bg-gradient-to-b ${theme.bgGradient} text-slate-100 flex flex-col justify-between select-none relative font-sans transition-colors duration-500`}>
       {/* Live Event Announcement Broadcast Banner */}
       {activeEvent && activeEvent.isActive && (
-        <div className="z-20 bg-gradient-to-r from-amber-500/20 via-yellow-500/25 to-amber-500/20 border-b border-amber-400/40 px-3 py-1 flex items-center justify-center gap-2 text-[11px] text-amber-200 backdrop-blur-md animate-fadeIn">
+        <div className="z-20 bg-gradient-to-r from-amber-500/20 via-yellow-500/25 to-amber-500/20 border-b border-amber-400/40 px-2 sm:px-3 py-0.5 sm:py-1 flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-amber-200 backdrop-blur-md animate-fadeIn shrink-0">
           <Sparkles className="w-3 h-3 text-amber-300 animate-spin" style={{ animationDuration: '6s' }} />
-          <span className="font-mono text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-400 text-slate-950">
+          <span className="font-mono text-[8px] sm:text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-400 text-slate-950">
             {activeEvent.tag || 'EVENT'}
           </span>
-          <span className="font-semibold">{activeEvent.title}:</span>
-          <span className="text-amber-100/80 hidden sm:inline">{activeEvent.description}</span>
+          <span className="font-semibold truncate max-w-[140px] sm:max-w-none">{activeEvent.title}:</span>
+          <span className="text-amber-100/80 hidden md:inline truncate">{activeEvent.description}</span>
         </div>
       )}
 
       {/* ===================== TOP HEADER ===================== */}
-      <header className="h-13 flex-shrink-0 z-20 px-3 sm:px-6 py-2 flex justify-between items-center border-b border-casino-gold/25 bg-black/45 backdrop-blur-md">
-        {/* Left: Royal Logo (Two Cards + Gold Serif Title) */}
-        <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 flex items-center justify-center">
-            <div className="absolute w-5 h-7 rounded bg-white border border-slate-300 shadow -rotate-12 flex items-center justify-center text-[10px] text-slate-900 font-bold">
-              ♠
-            </div>
-            <div className="absolute w-5 h-7 rounded bg-white border border-red-300 shadow rotate-12 flex items-center justify-center text-[10px] text-red-600 font-bold">
-              ♥
-            </div>
-          </div>
-          <div className="leading-tight">
-            <span className="font-serif font-black tracking-wider text-base sm:text-lg text-gold-gradient drop-shadow">
-              BHABHI
+      <header className="h-12 sm:h-13 flex-shrink-0 z-30 px-2 sm:px-5 py-1.5 flex justify-between items-center border-b border-casino-gold/25 bg-black/60 backdrop-blur-md gap-1 sm:gap-2">
+        {/* Left Section: Table Turn Order & Status Trigger + Royal Logo */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          {/* Table Turn Order & Match Status Trigger (Left Icon with Player Count Badge) */}
+          <button
+            onClick={() => setShowMatchStatusMobile((prev) => !prev)}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border text-xs font-semibold shadow transition shrink-0 ${
+              showMatchStatusMobile
+                ? 'bg-amber-500/25 border-casino-gold text-casino-goldLight shadow-[0_0_12px_rgba(251,191,36,0.3)]'
+                : 'bg-black/50 border-casino-gold/40 text-slate-300 hover:text-casino-gold'
+            }`}
+            title="View Table Turn Order & Status"
+          >
+            <Users className="w-3.5 h-3.5 text-casino-gold" />
+            <span className="hidden sm:inline font-serif text-[11px]">Table</span>
+            <span className="text-[10px] bg-casino-gold/25 text-casino-gold px-1.5 py-0.2 rounded-full font-mono font-bold">
+              {gameState?.players?.length || 0}/{gameState?.maxPlayers || 4}
             </span>
-            <span className="block font-serif font-black tracking-widest text-xs sm:text-sm text-gold-gradient -mt-1">
-              THOLA
-            </span>
+          </button>
+
+          {/* Logo */}
+          <div className="flex items-center gap-1.5">
+            <div className="relative w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
+              <div className="absolute w-4 h-5 sm:w-5 sm:h-7 rounded bg-white border border-slate-300 shadow -rotate-12 flex items-center justify-center text-[8px] sm:text-[10px] text-slate-900 font-bold">
+                ♠
+              </div>
+              <div className="absolute w-4 h-5 sm:w-5 sm:h-7 rounded bg-white border border-red-300 shadow rotate-12 flex items-center justify-center text-[8px] sm:text-[10px] text-red-600 font-bold">
+                ♥
+              </div>
+            </div>
+            <div className="leading-tight hidden sm:block">
+              <span className="font-serif font-black tracking-wider text-sm sm:text-base text-gold-gradient drop-shadow">
+                BHABHI
+              </span>
+              <span className="block font-serif font-black tracking-widest text-[10px] sm:text-xs text-gold-gradient -mt-1">
+                THOLA
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Center: Room Code Pill & Round Badge */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5 bg-black/50 border border-casino-gold/50 px-3 py-1 rounded-xl shadow-inner text-xs">
-            <span className="text-slate-400 text-[11px] hidden sm:inline">Room Code:</span>
-            <span className="font-mono font-bold text-casino-gold tracking-widest text-xs sm:text-sm">
+        {/* Center Section: Room Code Pill & Round Badge */}
+        <div className="flex items-center gap-1 sm:gap-2.5">
+          <div className="flex items-center gap-1 bg-black/50 border border-casino-gold/50 px-2 sm:px-3 py-1 rounded-xl shadow-inner text-xs">
+            <span className="text-slate-400 text-[10px] hidden md:inline">Room:</span>
+            <span className="font-mono font-bold text-casino-gold tracking-wider sm:tracking-widest text-[11px] sm:text-sm">
               {roomCode}
             </span>
             <button
               onClick={copyRoomLink}
-              className="ml-1 text-slate-400 hover:text-casino-gold transition"
+              className="ml-0.5 text-slate-400 hover:text-casino-gold transition"
               title="Copy Room Code"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" /> : <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
             </button>
           </div>
 
-          <div className="px-3.5 py-1 rounded-full bg-black/50 border border-casino-gold/40 text-casino-goldLight font-medium text-xs shadow-inner">
-            Round {gameState?.roundNumber || 1} / {gameState?.maxRounds || 5}
+          <div className="px-2 sm:px-3 py-1 rounded-full bg-black/50 border border-casino-gold/40 text-casino-goldLight font-medium text-[10px] sm:text-xs shadow-inner whitespace-nowrap">
+            R {gameState?.roundNumber || 1}/{gameState?.maxRounds || 5}
           </div>
-
-          {/* Deck Configuration Pill (Clickable toggle for Host before round) */}
-          <button
-            onClick={() => {
-              if (isHost && (gameState?.status === 'waiting' || gameState?.status === 'game_over')) {
-                const nextDeck = gameState.deckType === 'double' ? 'single' : 'double';
-                dispatchAction({ type: 'SET_DECK_TYPE', deckType: nextDeck });
-              }
-            }}
-            disabled={!isHost || (gameState?.status !== 'waiting' && gameState?.status !== 'game_over')}
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold transition ${
-              gameState?.deckType === 'double'
-                ? 'bg-amber-950/80 border-amber-400/80 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)]'
-                : 'bg-black/50 border-casino-gold/40 text-casino-goldLight shadow-inner'
-            } ${
-              isHost && (gameState?.status === 'waiting' || gameState?.status === 'game_over')
-                ? 'hover:brightness-125 cursor-pointer'
-                : 'cursor-default'
-            }`}
-            title={
-              isHost && (gameState?.status === 'waiting' || gameState?.status === 'game_over')
-                ? 'Click to toggle Single / Double Deck'
-                : 'Active Deck Configuration'
-            }
-          >
-            <Layers className="w-3.5 h-3.5 text-casino-gold" />
-            <span>{gameState?.deckType === 'double' ? 'Double Deck (104)' : 'Single Deck (52)'}</span>
-            {isHost && (gameState?.status === 'waiting' || gameState?.status === 'game_over') && (
-              <span className="text-[9px] bg-casino-gold/25 px-1 rounded text-casino-gold uppercase">
-                Change
-              </span>
-            )}
-          </button>
         </div>
 
-        {/* Right: Profile, Audio Toggle, Settings, Leave Room Button */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Quick Profile & Avatar Edit Button */}
+        {/* Right Section: Actions (Bots/Deal, Rules, Sound, Chat with Notify Badge, Leave) */}
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {/* Host Deal Button */}
+          {isHost && gameState?.status === 'waiting' && (
+            <button
+              onClick={handleStartGame}
+              disabled={(gameState?.players.length || 0) < 2}
+              className={`flex items-center gap-1 px-2.5 sm:px-3.5 py-1 rounded-xl font-bold uppercase tracking-wider text-[11px] sm:text-xs shadow-gold transition shrink-0 ${
+                (gameState?.players.length || 0) >= 2
+                  ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 hover:brightness-110 active:scale-95'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+              }`}
+              title="Deal Cards & Start Match"
+            >
+              <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
+              <span className="hidden sm:inline">{(gameState?.players.length || 0) >= 2 ? t.dealCards : `${gameState?.players.length || 1}/2+`}</span>
+            </button>
+          )}
+
+          {/* Quick Add Bot (Host only) */}
+          {isHost && (gameState?.players.length || 0) < (gameState?.maxPlayers || 4) && gameState?.status === 'waiting' && (
+            <button
+              onClick={() => dispatchAction({ type: 'ADD_BOT' })}
+              className="hidden md:flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/50 px-2 py-1 rounded-xl text-casino-goldLight text-xs transition shrink-0"
+              title="Add AI Player"
+            >
+              <Bot className="w-3.5 h-3.5 text-casino-gold" />
+              <span>+ Bot</span>
+            </button>
+          )}
+
+          {/* Audio Toggle */}
+          <button
+            onClick={() => setSoundEnabled((prev) => !prev)}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-casino-gold/10 hover:bg-casino-gold/20 border border-casino-gold/40 flex items-center justify-center text-casino-gold transition shrink-0"
+            title="Toggle Sound"
+          >
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />}
+          </button>
+
+          {/* Rules Modal Trigger */}
+          <button
+            onClick={() => setShowRules(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl border border-casino-gold/50 bg-slate-900/80 hover:bg-slate-800 text-casino-gold text-xs font-semibold shadow transition shrink-0"
+            title="View Rules"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-casino-gold" />
+            <span className="hidden sm:inline">Rules</span>
+          </button>
+
+          {/* Profile Button */}
           <button
             onClick={() => setShowProfileModal(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-casino-gold/50 bg-slate-900/80 hover:bg-slate-850 transition text-xs font-semibold shadow"
-            title="Edit VIP Profile, Gender & Avatar"
+            className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full border border-casino-gold/50 bg-slate-900/80 hover:bg-slate-850 transition text-xs font-semibold shadow shrink-0"
+            title="Edit VIP Profile & Avatar"
           >
             <img
               src={myPlayer?.avatarUrl || playerAvatar || '/avatars/male_m1.jpg'}
               alt="Me"
               className="w-4 h-4 rounded-full object-cover ring-1 ring-casino-gold"
             />
-            <span className="text-casino-goldLight max-w-[65px] truncate hidden sm:inline">
+            <span className="text-casino-goldLight max-w-[55px] truncate hidden md:inline">
               {myPlayer?.name || playerName}
             </span>
           </button>
 
+          {/* LIVE CHAT BUTTON WITH NOTIFICATION BADGE (Right Icon) */}
           <button
-            onClick={() => setSoundEnabled((prev) => !prev)}
-            className="w-8 h-8 rounded-full bg-casino-gold/10 hover:bg-casino-gold/20 border border-casino-gold/40 flex items-center justify-center text-casino-gold transition"
-            title="Toggle Sound"
+            onClick={() => setShowChatMobile((prev) => !prev)}
+            className={`relative flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl border text-xs font-semibold shadow transition shrink-0 ${
+              showChatMobile
+                ? 'bg-amber-500/25 border-casino-gold text-casino-goldLight shadow-[0_0_12px_rgba(251,191,36,0.3)]'
+                : 'bg-black/50 border-casino-gold/40 text-slate-300 hover:text-casino-gold'
+            }`}
+            title="Open Table Chat & Reactions"
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+            <MessageSquare className="w-3.5 h-3.5 text-casino-gold" />
+            <span className="hidden sm:inline">{t.chat}</span>
+            {unreadChatCount > 0 && !showChatMobile && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center border border-red-300 shadow-md animate-pulse">
+                {unreadChatCount}
+              </span>
+            )}
           </button>
 
-          {/* Quick Add Bot - ONLY HOST can add bots */}
-          {isHost && (gameState?.players.length || 0) < (gameState?.maxPlayers || 4) && gameState?.status === 'waiting' && (
-            <button
-              onClick={() => dispatchAction({ type: 'ADD_BOT' })}
-              className="hidden sm:flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/50 px-2.5 py-1 rounded-xl text-casino-goldLight text-xs transition"
-              title="Add AI Player"
-            >
-              <Bot className="w-3.5 h-3.5 text-casino-gold" />
-              <span>+ Bot ({gameState?.players.length || 0}/{gameState?.maxPlayers || 4})</span>
-            </button>
-          )}
-
-          {isHost && gameState?.status === 'waiting' && (
-            <button
-              onClick={handleStartGame}
-              disabled={(gameState?.players.length || 0) < 2}
-              className={`flex items-center gap-1.5 px-3.5 py-1 rounded-xl font-bold uppercase tracking-wider text-xs shadow-gold transition ${
-                (gameState?.players.length || 0) >= 2
-                  ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 hover:brightness-110 active:scale-95'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-              }`}
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>{(gameState?.players.length || 0) >= 2 ? t.dealCards : `${gameState?.players.length || 1}/2+`}</span>
-            </button>
-          )}
-
-          {/* Quick Language Selector Dropdown */}
-          <div className="relative hidden md:block">
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as any)}
-              className="appearance-none bg-slate-900/90 border border-slate-700 hover:border-casino-gold/60 text-slate-200 text-[11px] font-semibold rounded-full pl-2 pr-4 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-casino-gold transition shadow"
-              title="Change Language"
-            >
-              {Object.entries(LANGUAGE_LABELS).map(([code, meta]) => (
-                <option key={code} value={code} className="bg-slate-900 text-white">
-                  {meta.flag} {meta.nativeName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Rules Modal Trigger */}
-          <button
-            onClick={() => setShowRules(true)}
-            className="flex items-center gap-1 bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/50 px-2.5 py-1 rounded-xl text-casino-gold text-xs transition font-semibold"
-            title="View Bhabhi Thola Rules"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-casino-gold" />
-            <span className="hidden sm:inline">Rules</span>
-          </button>
-
+          {/* Leave Room Button */}
           <button
             onClick={onLeave}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 border border-red-400/50 text-white font-semibold px-3 py-1 rounded-xl text-xs shadow-md transition"
+            className="flex items-center gap-1 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 border border-red-400/50 text-white font-semibold px-2 sm:px-2.5 py-1 rounded-xl text-xs shadow-md transition shrink-0"
+            title="Leave Table"
           >
-            <span className="hidden sm:inline">{t.leaveRoom}</span>
             <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -861,29 +869,122 @@ export const GameTable: React.FC<GameTableProps> = ({
       )}
 
       {/* ===================== MAIN 3-COLUMN VIEWPORT ===================== */}
-      <div className="flex-1 min-h-0 flex overflow-hidden p-2 sm:p-3 gap-2 sm:gap-3 relative">
-        {/* ----------------- LEFT PANEL: MATCH STATUS ----------------- */}
-        <aside
-          className={`
-            fixed lg:static top-16 left-2 z-40 lg:z-10
-            w-48 xl:w-54 flex-shrink-0 bg-slate-950/90 backdrop-blur-md
-            border border-slate-800 rounded-2xl p-3
-            flex flex-col justify-between shadow-2xl
-            transition-transform duration-300
-            ${showMatchStatusMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          `}
-        >
+      <div className="flex-1 min-h-0 flex overflow-hidden p-1.5 sm:p-3 gap-2 sm:gap-3 relative">
+        {/* MOBILE SLIDE-OUT LEFT DRAWER: MATCH STATUS & TURN ORDER */}
+        {showMatchStatusMobile && (
+          <div
+            className="lg:hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex justify-start animate-fadeIn"
+            onClick={() => setShowMatchStatusMobile(false)}
+          >
+            <div
+              className="w-72 max-w-[85vw] h-full bg-slate-950/95 border-r border-casino-gold/50 p-4 shadow-2xl flex flex-col justify-between overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div>
+                <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-casino-gold" />
+                    <h3 className="text-xs font-bold text-gold-gradient uppercase tracking-wider">
+                      Table Turn Order
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowMatchStatusMobile(false)}
+                    className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Status indicator */}
+                <div className="flex items-center gap-2 mb-3 bg-black/40 px-2.5 py-1.5 rounded-xl border border-slate-800">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
+                  <span className="text-[11px] font-semibold text-emerald-300 truncate">
+                    {gameState?.status === 'in_progress'
+                      ? 'Playing...'
+                      : gameState?.status === 'game_over'
+                      ? 'Round Ended'
+                      : 'Waiting...'}
+                  </span>
+                </div>
+
+                {/* Turn Order List */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                    Turn Order:
+                  </div>
+
+                  {gameState?.players.map((p) => {
+                    const isCurrentTurn = gameState.currentTurnPlayerId === p.id;
+                    const isSelf = p.id === playerId;
+                    const isSafe = Boolean(
+                      gameState?.status !== 'waiting' &&
+                      (p.isSafe || (gameState?.status === 'in_progress' && (p.cardCount ?? 0) === 0 && !gameState?.isDealing))
+                    );
+
+                    return (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all ${
+                          isSafe
+                            ? 'opacity-35 grayscale bg-black/20 border border-dashed border-slate-800'
+                            : isCurrentTurn
+                            ? 'bg-amber-500/20 border border-amber-400/60 shadow-[0_0_12px_rgba(251,191,36,0.2)]'
+                            : isSelf
+                            ? 'bg-amber-500/10 border border-amber-400/40 text-amber-200'
+                            : 'bg-black/30 border border-slate-800/60'
+                        }`}
+                      >
+                        {isCurrentTurn && !isSafe ? (
+                          <span className="text-amber-400 font-bold text-[11px] animate-pulse">▶</span>
+                        ) : (
+                          <span className="w-2" />
+                        )}
+
+                        <img
+                          src={p.avatarUrl}
+                          alt={p.name}
+                          className="w-6 h-6 rounded-full object-cover border border-casino-gold/60 shadow flex-shrink-0"
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] font-semibold text-white truncate flex items-center justify-between">
+                            <span className="truncate">{p.name} {isSelf && '(You)'}</span>
+                            {isSafe && (
+                              <span className="text-[8px] text-emerald-400 font-bold bg-emerald-950 px-1 py-0.2 rounded ml-1 flex-shrink-0">
+                                🛡️ SAFE
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[9px] text-slate-400">
+                            {gameState?.status === 'waiting'
+                              ? 'Ready'
+                              : isSafe
+                              ? 'Out of match'
+                              : `🂠 ${p.cardCount} cards`}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="text-[9px] text-slate-400 pt-3 border-t border-slate-800 flex justify-between">
+                <span>Room: {roomCode}</span>
+                <span className="text-emerald-400 font-mono">Live Session</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- DESKTOP LEFT PANEL: DOCKED MATCH STATUS ----------------- */}
+        <aside className="hidden lg:flex w-48 xl:w-56 flex-shrink-0 bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-2xl p-3 flex-col justify-between shadow-2xl">
           <div>
             <div className="flex justify-between items-center mb-2.5">
               <h3 className="text-xs font-bold text-gold-gradient uppercase tracking-wider">
                 Match Status
               </h3>
-              <button
-                onClick={() => setShowMatchStatusMobile(false)}
-                className="lg:hidden text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             {/* Status indicator */}
@@ -977,10 +1078,10 @@ export const GameTable: React.FC<GameTableProps> = ({
               }
             }
           }}
-          className="flex-1 min-h-0 flex flex-col justify-between items-center relative overflow-visible px-2 sm:px-4 pt-7 sm:pt-9 pb-1"
+          className="flex-1 min-h-0 flex flex-col justify-between items-center relative overflow-visible px-2 sm:px-4 pt-2 sm:pt-6 pb-1"
         >
           {/* THE LUXURY OVAL TABLE WITH SAFE SIDEBAR CLEARANCE */}
-          <div className="relative w-full max-w-[540px] md:max-w-[620px] lg:max-w-[680px] xl:max-w-[740px] h-[37vh] sm:h-[41vh] my-auto flex items-center justify-center">
+          <div className="relative w-full max-w-[540px] md:max-w-[620px] lg:max-w-[680px] xl:max-w-[740px] h-[34vh] sm:h-[40vh] my-auto flex items-center justify-center">
             {/* Outer Wood Rail */}
             <div
               className="w-full h-full rounded-[140px] sm:rounded-[180px] p-2 sm:p-3 shadow-[0_12px_40px_rgba(0,0,0,0.85)] border-2 relative flex items-center justify-center transition-all duration-500"
@@ -1304,49 +1405,112 @@ export const GameTable: React.FC<GameTableProps> = ({
                 <ArrowLeftRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>{t.sortHand}</span>
               </button>
-
-              <button
-                onClick={() => setShowChatMobile((prev) => !prev)}
-                className="flex items-center gap-1 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-casino-gold/60 text-casino-gold font-semibold text-[11px] sm:text-xs shadow transition whitespace-nowrap"
-              >
-                <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>{t.chat}</span>
-              </button>
-
-              {/* Status Toggle on Mobile (< 1024px) */}
-              <button
-                onClick={() => setShowMatchStatusMobile((prev) => !prev)}
-                className="lg:hidden flex items-center gap-1 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-[11px] shadow transition whitespace-nowrap"
-              >
-                <Users className="w-3 h-3" />
-                <span>Status</span>
-              </button>
             </div>
           </div>
         </main>
 
-        {/* ----------------- RIGHT PANEL: CHAT ----------------- */}
-        <aside
-          className={`
-            fixed lg:static top-16 right-2 z-40 lg:z-10
-            w-56 sm:w-64 xl:w-72 flex-shrink-0 bg-slate-950/90 backdrop-blur-md
-            border border-slate-800 rounded-2xl p-3
-            flex flex-col justify-between shadow-2xl h-[80vh] lg:h-auto
-            transition-transform duration-300
-            ${showChatMobile ? 'translate-x-0' : 'translate-x-[110%] lg:translate-x-0'}
-          `}
-        >
+        {/* MOBILE SLIDE-OUT RIGHT DRAWER: CHAT & ACTIVITY */}
+        {showChatMobile && (
+          <div
+            className="lg:hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex justify-end animate-fadeIn"
+            onClick={() => setShowChatMobile(false)}
+          >
+            <div
+              className="w-80 max-w-[90vw] h-full bg-slate-950/95 border-l border-casino-gold/50 p-3.5 shadow-2xl flex flex-col justify-between overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800 flex-shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-casino-gold" />
+                  <h3 className="text-xs font-bold text-white">Live Table Chat</h3>
+                </div>
+                <button
+                  onClick={() => setShowChatMobile(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div
+                ref={chatScrollRef}
+                className="flex-1 min-h-0 space-y-2.5 overflow-y-auto py-2.5 pr-1 text-xs scrollbar-thin"
+              >
+                {gameState?.chatMessages?.map((msg) => {
+                  const isSelf = msg.playerId === playerId;
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex gap-2 ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}
+                    >
+                      <img
+                        src={msg.playerAvatar}
+                        alt={msg.playerName}
+                        className="w-6 h-6 rounded-full object-cover border border-casino-gold/50 flex-shrink-0"
+                      />
+                      <div
+                        className={`max-w-[78%] rounded-xl p-2 ${
+                          isSelf
+                            ? 'bg-amber-500/20 border border-amber-400/50 text-amber-100 rounded-tr-none'
+                            : 'bg-black/50 border border-slate-800 text-slate-200 rounded-tl-none'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="font-bold text-[9px] text-casino-gold truncate">
+                            {msg.playerName}
+                          </span>
+                          <span className="text-[8px] text-slate-400">{msg.timestamp}</span>
+                        </div>
+                        <p className="text-[11px] leading-tight">{msg.text}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Emoji Reactions Row */}
+              <div className="pt-2 border-t border-slate-800 flex-shrink-0">
+                <div className="flex justify-between items-center px-1 mb-2">
+                  {['👍', '❤️', '🔥', '😂', '👏'].map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => handleSendReaction(emoji)}
+                      className="w-7 h-7 rounded-full bg-black/40 hover:bg-casino-gold/20 flex items-center justify-center text-xs transition transform hover:scale-125"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+
+                <form onSubmit={handleSendChat} className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Type a message..."
+                    maxLength={80}
+                    className="flex-1 bg-black/60 border border-slate-700 focus:border-casino-gold rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-casino-gold/50"
+                  />
+                  <button
+                    type="submit"
+                    className="w-8 h-8 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center hover:brightness-110 active:scale-95 shadow transition flex-shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5 fill-current" />
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------- DESKTOP RIGHT PANEL: DOCKED CHAT ----------------- */}
+        <aside className="hidden lg:flex w-56 sm:w-64 xl:w-72 flex-shrink-0 bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-2xl p-3 flex-col justify-between shadow-2xl">
           <div className="flex justify-between items-center pb-2 border-b border-slate-800 flex-shrink-0">
             <div className="flex items-center gap-1.5">
               <MessageSquare className="w-4 h-4 text-casino-gold" />
               <h3 className="text-xs font-bold text-white">Chat</h3>
             </div>
-            <button
-              onClick={() => setShowChatMobile(false)}
-              className="text-slate-400 hover:text-white"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
           </div>
 
           <div

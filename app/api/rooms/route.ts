@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const avatarUrl = body.avatarUrl;
     const maxPlayers = body.maxPlayers && body.maxPlayers >= 2 && body.maxPlayers <= 8 ? body.maxPlayers : 4;
 
-    const session = RoomManager.getOrCreateSession(roomId, roomCode, maxPlayers);
+    const session = await RoomManager.ensureSession(roomId, roomCode, maxPlayers);
     if (body.deckType === 'double' || body.deckType === 'single') {
       session.state.deckType = body.deckType;
     }
@@ -52,25 +52,7 @@ export async function POST(req: Request) {
       playerState = RoomManager.registerPlayer(roomId, playerId, playerName, avatarUrl);
     }
 
-    // Persist to Neon DB if available
-    if (db) {
-      try {
-        await db
-          .insert(rooms)
-          .values({
-            id: roomId,
-            code: roomCode,
-            status: 'waiting',
-            maxPlayers,
-            currentTrick: [],
-            discardPile: [],
-            logs: session.state.logs,
-          })
-          .onConflictDoNothing();
-      } catch (err) {
-        console.warn('DB error inserting room:', err);
-      }
-    }
+    await RoomManager.persistToDb(session);
 
     return NextResponse.json({
       success: true,
@@ -91,40 +73,24 @@ export async function GET(req: Request) {
   if (checkCode) {
     const cleanCode = checkCode.trim().toUpperCase();
     const testRoomId = 'room_' + cleanCode.toLowerCase();
-    const session = activeRooms.get(testRoomId);
+    
+    // Check in-memory or load from Neon DB
+    let session = activeRooms.get(testRoomId) || activeRooms.get(cleanCode);
+    if (!session && db) {
+      session = (await RoomManager.loadSessionFromDb(cleanCode)) || undefined;
+    }
 
     if (session) {
       return NextResponse.json({
         success: true,
         exists: true,
-        roomId: testRoomId,
-        roomCode: cleanCode,
+        roomId: session.state.roomId,
+        roomCode: session.state.roomCode,
         status: session.state.status,
         playerCount: session.state.players.length,
         maxPlayers: session.state.maxPlayers,
         roundNumber: session.state.roundNumber,
       });
-    }
-
-    // Check Neon Database for existing room
-    if (db) {
-      try {
-        const dbRoom = await db.query.rooms.findFirst({
-          where: eq(rooms.code, cleanCode),
-        });
-        if (dbRoom) {
-          return NextResponse.json({
-            success: true,
-            exists: true,
-            roomId: dbRoom.id,
-            roomCode: dbRoom.code,
-            status: dbRoom.status,
-            playerCount: 1,
-            maxPlayers: dbRoom.maxPlayers || 4,
-            roundNumber: 1,
-          });
-        }
-      } catch {}
     }
 
     return NextResponse.json({
@@ -144,7 +110,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'roomId required' }, { status: 400 });
   }
 
-  const session = RoomManager.getOrCreateSession(roomId);
+  const session = await RoomManager.ensureSession(roomId);
 
   let state = session.state;
   if (playerId && playerName) {

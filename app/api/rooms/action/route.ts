@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing roomId, playerId or type' }, { status: 400 });
     }
 
-    const session = RoomManager.getOrCreateSession(roomId);
+    const session = await RoomManager.ensureSession(roomId);
 
     switch (type) {
       case 'START_GAME': {

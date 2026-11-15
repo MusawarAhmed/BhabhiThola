@@ -40,6 +40,8 @@ export async function ensureTablesExist() {
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false;`;
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);`;
       await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`;
+      await sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS state_json JSONB;`;
+      await sql`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS players_data JSONB;`;
     } catch {}
 
     await sql`

@@ -32,6 +32,8 @@ export const rooms = pgTable('rooms', {
   maxPlayers: integer('max_players').default(4).notNull(),
   isFirstTrick: boolean('is_first_trick').default(true).notNull(),
   logs: jsonb('logs').$type<GameLogEntry[]>().default([]),
+  stateJson: jsonb('state_json').$type<any>(),
+  playersData: jsonb('players_data').$type<any>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

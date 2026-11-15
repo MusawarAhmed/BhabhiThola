@@ -23,6 +23,7 @@ import {
 } from './engine';
 import { db } from '../db';
 import { rooms, players } from '../db/schema';
+import { eq, or } from 'drizzle-orm';
 
 interface RoomSession {
   state: GameState;
@@ -79,6 +80,99 @@ function formatTime(): string {
 }
 
 export class RoomManager {
+  static async ensureSession(
+    roomId: string,
+    roomCode?: string,
+    maxPlayers?: number
+  ): Promise<RoomSession> {
+    const cleanId = roomId.trim();
+    let session = activeRooms.get(cleanId);
+
+    // If not in local instance memory, check Neon DB
+    if (!session && db) {
+      session = (await this.loadSessionFromDb(cleanId)) || undefined;
+    }
+
+    if (!session) {
+      session = this.getOrCreateSession(cleanId, roomCode, maxPlayers);
+      await this.persistToDb(session);
+    }
+
+    return session;
+  }
+
+  static async loadSessionFromDb(roomIdOrCode: string): Promise<RoomSession | null> {
+    if (!db) return null;
+    try {
+      const cleanInput = roomIdOrCode.trim();
+      const codeOnly = cleanInput.replace(/^room_/i, '').toUpperCase();
+      const idOnly = 'room_' + codeOnly.toLowerCase();
+
+      const dbRoom = await db.query.rooms.findFirst({
+        where: or(eq(rooms.id, idOnly), eq(rooms.code, codeOnly)),
+      });
+
+      if (!dbRoom) return null;
+
+      let loadedState: GameState;
+      if (dbRoom.stateJson) {
+        loadedState = dbRoom.stateJson as GameState;
+        loadedState.roomId = dbRoom.id;
+        loadedState.roomCode = dbRoom.code;
+      } else {
+        loadedState = {
+          roomId: dbRoom.id,
+          roomCode: dbRoom.code,
+          status: dbRoom.status as any,
+          roundNumber: 1,
+          maxRounds: 5,
+          maxPlayers: dbRoom.maxPlayers || 4,
+          currentTurnPlayerId: dbRoom.currentTurnPlayerId,
+          leadPlayerId: dbRoom.leadPlayerId,
+          suitLed: dbRoom.suitLed as any,
+          currentTrick: dbRoom.currentTrick || [],
+          discardPileCount: (dbRoom.discardPile as any[])?.length || 0,
+          players: [],
+          bhabhiPlayerId: dbRoom.bhabhiPlayerId,
+          logs: dbRoom.logs || [],
+          chatMessages: [],
+          isFirstTrickOfGame: dbRoom.isFirstTrick,
+          lastThola: null,
+          deckType: 'single',
+          isDealing: false,
+          safePlayersOrder: [],
+          brokenSuits: [],
+        };
+      }
+
+      const playersPrivate = new Map<string, PlayerPrivate>();
+      if (Array.isArray(dbRoom.playersData)) {
+        for (const [pId, pData] of dbRoom.playersData) {
+          if (pId && pData) {
+            playersPrivate.set(pId, pData);
+          }
+        }
+      }
+
+      const existing = activeRooms.get(dbRoom.id);
+      const session: RoomSession = {
+        state: loadedState,
+        playersPrivate,
+        clients: existing ? existing.clients : new Map(),
+        sseClients: existing ? existing.sseClients : new Map(),
+      };
+
+      this.syncPublicPlayers(session);
+      activeRooms.set(dbRoom.id, session);
+      activeRooms.set('room_' + dbRoom.code.toLowerCase(), session);
+
+      return session;
+    } catch (err) {
+      console.warn('Error loading session from Neon DB:', err);
+      return null;
+    }
+  }
+
   static getOrCreateSession(roomId: string, roomCode?: string, maxPlayers?: number): RoomSession {
     let session = activeRooms.get(roomId);
     if (!session) {
@@ -938,9 +1032,10 @@ export class RoomManager {
     });
   }
 
-  private static async persistToDb(session: RoomSession) {
+  static async persistToDb(session: RoomSession) {
     if (!db) return;
     try {
+      const playersData = Array.from(session.playersPrivate.entries());
       await db
         .insert(rooms)
         .values({
@@ -956,6 +1051,8 @@ export class RoomManager {
           maxPlayers: session.state.maxPlayers,
           isFirstTrick: session.state.isFirstTrickOfGame,
           logs: session.state.logs.slice(-30),
+          stateJson: session.state,
+          playersData,
           updatedAt: new Date(),
         })
         .onConflictDoUpdate({
@@ -969,6 +1066,8 @@ export class RoomManager {
             bhabhiPlayerId: session.state.bhabhiPlayerId,
             isFirstTrick: session.state.isFirstTrickOfGame,
             logs: session.state.logs.slice(-30),
+            stateJson: session.state,
+            playersData,
             updatedAt: new Date(),
           },
         });

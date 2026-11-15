@@ -48,6 +48,7 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
   const [guestGamesPlayed, setGuestGamesPlayed] = useState<number>(0);
   const [forceAuthModal, setForceAuthModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState('');
 
   // Live Room Code Detection State
@@ -233,29 +234,38 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
     const code = joinCode.trim().toUpperCase();
     const roomId = 'room_' + code.toLowerCase();
 
-    // If detection revealed this code does NOT exist yet, create room with this exact code!
-    if (detectionResult && !detectionResult.exists) {
-      await handleCreateRoom(code);
-      return;
-    }
-
+    setIsJoining(true);
     try {
-      // Pre-register player via HTTP with custom avatar
+      // 1. Verify table actually exists before joining (never accidentally create a separate table!)
+      const checkRes = await fetch(`/api/rooms?checkCode=${encodeURIComponent(code)}`);
+      const checkData = await checkRes.json();
+
+      if (!checkData.success || !checkData.exists) {
+        setError(`Table with code "${code}" does not exist. Please verify the code or click "Create VIP Room".`);
+        setIsJoining(false);
+        return;
+      }
+
+      // 2. Pre-register player into existing shared table in DB
+      const targetRoomId = checkData.roomId || roomId;
       await fetch(
-        `/api/rooms?roomId=${encodeURIComponent(roomId)}&playerId=${encodeURIComponent(
+        `/api/rooms?roomId=${encodeURIComponent(targetRoomId)}&playerId=${encodeURIComponent(
           playerId
         )}&playerName=${encodeURIComponent(playerName.trim())}&avatarUrl=${encodeURIComponent(
           avatarUrl
         )}`
       );
+      onJoinRoom(targetRoomId, playerName.trim(), code, avatarUrl);
+    } catch (err: any) {
+      console.warn('Join error:', err);
       onJoinRoom(roomId, playerName.trim(), code, avatarUrl);
-    } catch {
-      onJoinRoom(roomId, playerName.trim(), code, avatarUrl);
+    } finally {
+      setIsJoining(false);
     }
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${theme.bgGradient} text-slate-100 flex flex-col justify-between p-2.5 sm:p-4 md:p-8 transition-colors duration-500`}>
+    <div className={`min-h-[100dvh] bg-gradient-to-b ${theme.bgGradient} text-slate-100 flex flex-col justify-between p-2 sm:p-4 md:p-8 transition-colors duration-500 overflow-x-hidden`}>
       {/* Live Event Announcement Broadcast Banner */}
       {activeEvent && activeEvent.isActive && (
         <div className="max-w-5xl mx-auto w-full mb-3 -mt-1 animate-fadeIn">
@@ -403,28 +413,28 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
       </header>
 
       {/* Main Card */}
-      <main className="w-full max-w-md mx-auto my-auto py-4 sm:py-6">
-        <div className="bg-slate-900/85 backdrop-blur-md border-2 border-casino-gold/40 rounded-2xl p-4 sm:p-6 md:p-8 shadow-[0_15px_50px_rgba(0,0,0,0.85)] relative overflow-hidden">
+      <main className="w-full max-w-md mx-auto my-auto py-2 sm:py-6">
+        <div className="bg-slate-900/85 backdrop-blur-md border-2 border-casino-gold/40 rounded-2xl p-3.5 sm:p-6 md:p-8 shadow-[0_15px_50px_rgba(0,0,0,0.85)] relative overflow-hidden">
           {/* Decorative Golden Corner Accents */}
           <div className="absolute top-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-t-2 border-l-2 border-casino-gold rounded-tl-xl pointer-events-none" />
           <div className="absolute top-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-t-2 border-r-2 border-casino-gold rounded-tr-xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-6 h-6 sm:w-8 sm:h-8 border-b-2 border-l-2 border-casino-gold rounded-bl-xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-b-2 border-r-2 border-casino-gold rounded-br-xl pointer-events-none" />
 
-          <div className="text-center mb-4 sm:mb-6">
-            <div className="inline-flex items-center justify-center p-1.5 sm:p-2 rounded-full bg-casino-gold/10 border border-casino-gold/30 mb-2">
-              <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-casino-gold" />
+          <div className="text-center mb-2.5 sm:mb-4">
+            <div className="inline-flex items-center justify-center p-1 sm:p-2 rounded-full bg-casino-gold/10 border border-casino-gold/30 mb-1 sm:mb-2">
+              <Crown className="w-4 h-4 sm:w-6 sm:h-6 text-casino-gold" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-gold-gradient tracking-wider">
+            <h1 className="text-xl sm:text-3xl font-serif font-bold text-gold-gradient tracking-wider">
               Royal Casino Table
             </h1>
-            <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
+            <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">
               Multiplayer trick-taking & penalty card showdown
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 p-2.5 rounded-lg bg-red-950/80 border border-red-500/50 text-red-200 text-xs text-center">
+            <div className="mb-3 p-2 rounded-lg bg-red-950/80 border border-red-500/50 text-red-200 text-xs text-center">
               {error}
             </div>
           )}
@@ -572,22 +582,15 @@ export const Lobby: React.FC<LobbyProps> = ({ playerId, onJoinRoom }) => {
 
                 <button
                   type="submit"
+                  disabled={isJoining}
                   className={`w-1/3 py-3 px-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs uppercase tracking-wider font-semibold shadow ${
                     detectionResult?.exists
                       ? 'bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400'
-                      : detectionResult && !detectionResult.exists
-                      ? 'bg-amber-600 hover:bg-amber-500 text-white border border-amber-400'
                       : 'bg-emerald-700 hover:bg-emerald-600 border border-emerald-500 text-white'
                   }`}
                 >
                   <Users className="w-4 h-4" />
-                  <span>
-                    {detectionResult?.exists
-                      ? 'Join Table'
-                      : detectionResult && !detectionResult.exists
-                      ? 'Create'
-                      : 'Join'}
-                  </span>
+                  <span>{isJoining ? 'Joining...' : 'Join'}</span>
                 </button>
               </div>
 
