@@ -1163,6 +1163,7 @@ export const GameTable: React.FC<GameTableProps> = ({
                                 <CardView
                                   card={played.card}
                                   size="sm"
+                                  isTableCard={true}
                                   className={`sm:w-16 sm:h-24 shadow-2xl transition-all ${
                                     isHighlighted
                                       ? 'ring-[3px] ring-amber-400 border-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.95)]'

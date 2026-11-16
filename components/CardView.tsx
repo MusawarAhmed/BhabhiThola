@@ -9,6 +9,7 @@ interface CardViewProps {
   isFaceDown?: boolean;
   isPlayable?: boolean;
   isSelected?: boolean;
+  isTableCard?: boolean;
   onClick?: () => void;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
@@ -266,6 +267,7 @@ export const CardView: React.FC<CardViewProps> = ({
   isFaceDown = false,
   isPlayable = false,
   isSelected = false,
+  isTableCard = false,
   onClick,
   className = '',
   size = 'md',
@@ -387,10 +389,12 @@ export const CardView: React.FC<CardViewProps> = ({
           relative flex-shrink-0 ${sizeClasses[size]} rounded-md sm:rounded-lg
           border ${
             isSelected
-              ? 'border-amber-400 ring-[3px] ring-amber-400 shadow-[0_0_24px_rgba(251,191,36,0.95)] z-40 cursor-pointer'
+              ? 'border-amber-400 ring-[3px] ring-amber-400 shadow-[0_0_24px_rgba(251,191,36,0.95)] z-40 cursor-pointer brightness-105'
+              : isTableCard
+              ? 'border-amber-400/80 shadow-[0_6px_20px_rgba(0,0,0,0.8)]'
               : isPlayable
               ? 'border-amber-400/90 ring-1 ring-casino-gold/50 shadow-[0_4px_16px_rgba(0,0,0,0.8)] hover:-translate-y-2 hover:shadow-[0_6px_20px_rgba(212,175,55,0.6)] hover:z-30 cursor-pointer'
-              : 'border-slate-800 shadow-[0_4px_10px_rgba(0,0,0,0.5)] opacity-75 hover:opacity-90 cursor-pointer'
+              : 'border-slate-800 shadow-[0_4px_10px_rgba(0,0,0,0.5)] cursor-pointer brightness-90 hover:brightness-100'
           }
           transition-all duration-200 select-none overflow-hidden bg-[#0d0f12]
           ${className}
@@ -438,9 +442,11 @@ export const CardView: React.FC<CardViewProps> = ({
         border ${
           isSelected
             ? 'border-amber-400 ring-[3px] ring-amber-400 shadow-[0_0_24px_rgba(251,191,36,0.95)] z-40 cursor-pointer'
+            : isTableCard
+            ? `${borderClass} shadow-xl`
             : isPlayable
             ? `${borderClass} ring-1 ring-casino-gold/40 hover:-translate-y-2 hover:shadow-[0_6px_20px_rgba(212,175,55,0.5)] hover:z-30 cursor-pointer`
-            : `${borderClass} opacity-75 hover:opacity-90 cursor-pointer`
+            : `${borderClass} brightness-90 hover:brightness-100 cursor-pointer`
         }
         transition-all duration-200 select-none flex flex-col justify-between p-1 sm:p-1.5 overflow-hidden
         ${className}
