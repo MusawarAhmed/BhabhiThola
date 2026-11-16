@@ -109,37 +109,28 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  // Sync draft states when context changes
-  useEffect(() => {
-    setSelectedTheme(themeId);
-  }, [themeId]);
+  // One-time initialization ref so background updates NEVER overwrite active admin draft selections
+  const isDraftInitializedRef = React.useRef(false);
 
   useEffect(() => {
-    if (cardDesign) {
-      setDeckStyle(cardDesign.deckStyle);
-      setBackStyle(cardDesign.backStyle);
+    if (!isDraftInitializedRef.current) {
+      if (themeId) setSelectedTheme(themeId);
+      if (cardDesign) {
+        setDeckStyle(cardDesign.deckStyle);
+        setBackStyle(cardDesign.backStyle);
+      }
+      if (language) setSiteLang(language);
+      if (animationSettings) setAnimState(animationSettings);
+      if (activeEvent) {
+        setEventTitle(activeEvent.title);
+        setEventTag(activeEvent.tag);
+        setEventDesc(activeEvent.description);
+        setEventGlow(activeEvent.glowColor);
+        setEventActive(activeEvent.isActive);
+      }
+      isDraftInitializedRef.current = true;
     }
-  }, [cardDesign]);
-
-  useEffect(() => {
-    if (language) {
-      setSiteLang(language);
-    }
-  }, [language]);
-
-  useEffect(() => {
-    setAnimState(animationSettings);
-  }, [animationSettings]);
-
-  useEffect(() => {
-    if (activeEvent) {
-      setEventTitle(activeEvent.title);
-      setEventTag(activeEvent.tag);
-      setEventDesc(activeEvent.description);
-      setEventGlow(activeEvent.glowColor);
-      setEventActive(activeEvent.isActive);
-    }
-  }, [activeEvent]);
+  }, [themeId, cardDesign, language, animationSettings, activeEvent]);
 
   // Load server metrics
   useEffect(() => {
@@ -469,22 +460,37 @@ export default function AdminDashboardPage() {
                         <div>
                           {/* Mini Oval Table Felt Swatch */}
                           <div
-                            className="w-full h-16 rounded-[45px] p-1.5 flex items-center justify-center mb-2.5 shadow-md border"
+                            className="w-full h-16 rounded-[45px] p-1 flex items-center justify-center mb-2.5 shadow-md border overflow-hidden relative"
                             style={{
                               background: item.railStyle,
                               borderColor: item.railBorder,
                             }}
                           >
-                            <div
-                              className="w-full h-full rounded-[40px] flex items-center justify-center shadow-inner border border-black/40"
-                              style={{
-                                background: item.feltStyle,
-                              }}
-                            >
-                              <span className="text-[9px] font-bold tracking-wider uppercase text-white/90">
-                                {item.badge}
-                              </span>
-                            </div>
+                            {item.previewImage ? (
+                              <div className="w-full h-full rounded-[40px] overflow-hidden relative border border-black/40">
+                                <img
+                                  src={item.previewImage}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                  <span className="text-[9px] font-bold tracking-wider uppercase text-white drop-shadow">
+                                    {item.badge}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                className="w-full h-full rounded-[40px] flex items-center justify-center shadow-inner border border-black/40"
+                                style={{
+                                  background: item.feltStyle,
+                                }}
+                              >
+                                <span className="text-[9px] font-bold tracking-wider uppercase text-white/90">
+                                  {item.badge}
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex items-center justify-between mb-1">
@@ -543,6 +549,32 @@ export default function AdminDashboardPage() {
                         { id: 'ng_a', suit: 'SPADES', rank: 'A', value: 14 },
                         { id: 'ng_k', suit: 'HEARTS', rank: 'K', value: 13 },
                         { id: 'ng_7', suit: 'CLUBS', rank: '7', value: 7 },
+                      ] as Card[],
+                    },
+                    {
+                      id: 'mughal-gold' as CardDeckStyle,
+                      backId: 'mughal-lattice' as CardBackStyle,
+                      title: 'Mughal Royal Court & Gold Foil',
+                      reference: 'Royal Heritage Concept 3',
+                      badge: 'MUGHAL MINIATURE',
+                      desc: 'Ornate Mughal Emperor King, Maharani Queen, and Rajput warrior prince portraits with reflective metallic gold foil on matte obsidian card stock.',
+                      sampleCards: [
+                        { id: 'mg_a', suit: 'SPADES', rank: 'A', value: 14 },
+                        { id: 'mg_k', suit: 'HEARTS', rank: 'K', value: 13 },
+                        { id: 'mg_q', suit: 'DIAMONDS', rank: 'Q', value: 12 },
+                      ] as Card[],
+                    },
+                    {
+                      id: 'cyber-neon' as CardDeckStyle,
+                      backId: 'cyber-holo' as CardBackStyle,
+                      title: 'Cyberpunk High-Roller Neon',
+                      reference: 'Futuristic Concept 4',
+                      badge: 'HOLOGRAPHIC NEON',
+                      desc: 'Deep midnight navy card surface with glowing cyan & magenta neon pips, futuristic circuits, and holographic mirrored card back.',
+                      sampleCards: [
+                        { id: 'cy_a', suit: 'SPADES', rank: 'A', value: 14 },
+                        { id: 'cy_k', suit: 'HEARTS', rank: 'K', value: 13 },
+                        { id: 'cy_7', suit: 'CLUBS', rank: '7', value: 7 },
                       ] as Card[],
                     },
                     {

@@ -302,6 +302,41 @@ export const CardView: React.FC<CardViewProps> = ({
       );
     }
 
+    // 0b. Royal Mughal Gold Jaali Lattice (Concept 3)
+    if (backStyle === 'mughal-lattice' || deckStyle === 'mughal-gold') {
+      return (
+        <div
+          className={`relative flex-shrink-0 ${sizeClasses[size]} rounded-md sm:rounded-lg overflow-hidden border-2 border-amber-400/90 shadow-card flex items-center justify-center select-none bg-[#120a05] ${className}`}
+        >
+          <div className="absolute inset-1 border border-amber-400/60 rounded bg-[#0a0503] flex items-center justify-center overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-50"
+              style={{
+                backgroundImage: `radial-gradient(#d4af37 1px, transparent 1px)`,
+                backgroundSize: '4px 4px',
+              }}
+            />
+            <div className="w-8 h-10 border-2 border-amber-400/90 rounded-full flex items-center justify-center bg-[#1c0f06] shadow-[0_0_12px_rgba(212,175,55,0.6)] z-10 p-1">
+              <span className="text-amber-300 text-xs font-serif">🦚</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 0c. Cyberpunk Holographic (Concept 4)
+    if (backStyle === 'cyber-holo' || deckStyle === 'cyber-neon') {
+      return (
+        <div
+          className={`relative flex-shrink-0 ${sizeClasses[size]} rounded-md sm:rounded-lg overflow-hidden border-2 border-cyan-400/80 shadow-card flex items-center justify-center select-none bg-gradient-to-tr from-purple-950 via-slate-950 to-cyan-950 ${className}`}
+        >
+          <div className="absolute inset-1 border border-fuchsia-400/60 rounded flex items-center justify-center overflow-hidden">
+            <span className="text-cyan-300 text-xs font-mono font-bold">⚡</span>
+          </div>
+        </div>
+      );
+    }
+
     // 1. Image 4 bottom-right: Vintage Navy Cartouche with Baroque Gold Frame
     if (backStyle === 'vintage-navy-cartouche') {
       return (
@@ -415,12 +450,20 @@ export const CardView: React.FC<CardViewProps> = ({
   const isCourt = ['J', 'Q', 'K'].includes(card.rank);
   const isAceOfSpades = card.suit === 'SPADES' && card.rank === 'A';
 
-  // Deck Styling Palettes matching Images 3, 4, 5
+  // Deck Styling Palettes matching Images 3, 4, 5 & Concepts 3, 4
   let cardSurfaceClass = 'bg-gradient-to-b from-[#fbf8f0] via-[#f5efe2] to-[#ebdcc3] text-[#1c1917]';
   let textColor = isRed ? 'text-[#881326]' : 'text-[#1c1917]';
   let borderClass = 'border-[#c8b99d] shadow-[0_4px_10px_rgba(0,0,0,0.35)]';
 
-  if (deckStyle === 'midnight-sapphire') {
+  if (deckStyle === 'mughal-gold') {
+    cardSurfaceClass = 'bg-gradient-to-b from-[#1c1815] via-[#120f0d] to-[#0a0807] text-[#fef08a]';
+    textColor = isRed ? 'text-[#f43f5e]' : 'text-[#facc15]';
+    borderClass = 'border-amber-400/90 shadow-[0_4px_18px_rgba(212,175,55,0.4)]';
+  } else if (deckStyle === 'cyber-neon') {
+    cardSurfaceClass = 'bg-gradient-to-b from-[#180e29] via-[#0f071d] to-[#07030d] text-cyan-200';
+    textColor = isRed ? 'text-[#f43f5e]' : 'text-[#22d3ee]';
+    borderClass = 'border-cyan-400/80 shadow-[0_4px_16px_rgba(34,211,238,0.35)]';
+  } else if (deckStyle === 'midnight-sapphire') {
     cardSurfaceClass = 'bg-gradient-to-b from-[#181d29] via-[#141822] to-[#0e121a] text-white';
     textColor = isRed ? 'text-[#f43f5e]' : 'text-[#f5d77f]';
     borderClass = 'border-amber-400/80 shadow-[0_4px_14px_rgba(0,0,0,0.6)]';

@@ -97,32 +97,40 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const refreshSettings = async () => {
+    // In admin studio, do not poll to prevent overwriting active user drafts
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/settings');
       const data = await res.json();
       if (data.success) {
         if (data.themeId && CASINO_THEMES[data.themeId as ThemeId]) {
-          setThemeIdState(data.themeId as ThemeId);
+          setThemeIdState((prev) => (prev !== data.themeId ? (data.themeId as ThemeId) : prev));
           localStorage.setItem('bhabhi_site_theme', data.themeId);
         }
         if (data.animationSettings) {
-          setAnimationSettingsState(data.animationSettings);
-          localStorage.setItem('bhabhi_site_animations', JSON.stringify(data.animationSettings));
+          const serialized = JSON.stringify(data.animationSettings);
+          setAnimationSettingsState((prev) => (JSON.stringify(prev) !== serialized ? data.animationSettings : prev));
+          localStorage.setItem('bhabhi_site_animations', serialized);
         }
         if (data.activeEvent !== undefined) {
-          setActiveEventState(data.activeEvent);
+          const serialized = JSON.stringify(data.activeEvent);
+          setActiveEventState((prev) => (JSON.stringify(prev) !== serialized ? data.activeEvent : prev));
           if (data.activeEvent) {
-            localStorage.setItem('bhabhi_site_event', JSON.stringify(data.activeEvent));
+            localStorage.setItem('bhabhi_site_event', serialized);
           } else {
             localStorage.removeItem('bhabhi_site_event');
           }
         }
         if (data.cardDesign) {
-          setCardDesignState(data.cardDesign);
-          localStorage.setItem('bhabhi_card_design', JSON.stringify(data.cardDesign));
+          const serialized = JSON.stringify(data.cardDesign);
+          setCardDesignState((prev) => (JSON.stringify(prev) !== serialized ? data.cardDesign : prev));
+          localStorage.setItem('bhabhi_card_design', serialized);
         }
         if (data.language && TRANSLATIONS[data.language as SiteLanguage]) {
-          setLanguageState(data.language as SiteLanguage);
+          setLanguageState((prev) => (prev !== data.language ? (data.language as SiteLanguage) : prev));
           localStorage.setItem('bhabhi_site_language', data.language);
         }
       }

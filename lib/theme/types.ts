@@ -1,7 +1,8 @@
-export type ThemeId = 'emerald' | 'crimson' | 'sapphire' | 'midnight' | 'obsidian';
+export type ThemeId = 'emerald' | 'crimson' | 'sapphire' | 'midnight' | 'obsidian' | 'maharaja';
 
 export type CardDeckStyle =
   | 'noir-gold'           // Art Deco Noir & Gold Foil (User Image)
+  | 'mughal-gold'         // Mughal Royal Court & Gold Foil
   | 'vintage-ivory'       // Image 4: Antique Victorian Parchment / Cream Damask
   | 'midnight-sapphire'   // Image 3: Midnight Navy Blue & Filigree Gold
   | 'obsidian-gold'       // Image 5: Stealth Obsidian Matte Black & Gold Foil
@@ -11,11 +12,13 @@ export type CardDeckStyle =
 
 export type CardBackStyle =
   | 'noir-art-deco'          // Art Deco Geometric Gold Labyrinth (User Image)
+  | 'mughal-lattice'         // Royal Mughal Gold Jaali Lattice
   | 'vintage-navy-cartouche' // Image 4 bottom-right
   | 'sapphire-baroque'       // Image 3 bottom-right
   | 'obsidian-mandala'       // Image 5 bottom-right
   | 'lattice-pattern'        // Classic Bavarian Lattice
-  | 'imperial-ruby';
+  | 'imperial-ruby'
+  | 'cyber-holo';
 
 export type SiteLanguage = 'en' | 'ur' | 'hi' | 'pa' | 'ar' | 'es';
 
@@ -49,6 +52,7 @@ export interface CasinoTheme {
   accentText: string;
   glowShadow: string;
   badgeBg: string;
+  previewImage?: string;
 }
 
 export interface AnimationSettings {
@@ -83,6 +87,7 @@ export const CASINO_THEMES: Record<ThemeId, CasinoTheme> = {
     accentText: 'text-amber-300',
     glowShadow: '0 0 45px rgba(212, 175, 55, 0.4)',
     badgeBg: 'bg-emerald-950 border-emerald-500/60 text-emerald-400',
+    previewImage: '/themes/table_emerald_vip.jpg',
   },
   crimson: {
     id: 'crimson',
@@ -98,6 +103,23 @@ export const CASINO_THEMES: Record<ThemeId, CasinoTheme> = {
     accentText: 'text-rose-300',
     glowShadow: '0 0 45px rgba(244, 63, 94, 0.45)',
     badgeBg: 'bg-rose-950 border-rose-500/60 text-rose-400',
+    previewImage: '/themes/table_maharaja_ruby.jpg',
+  },
+  maharaja: {
+    id: 'maharaja',
+    name: 'Royal Maharaja Heritage',
+    badge: 'PALACE VIP',
+    tagline: 'Deep royal ruby velvet cloth with gold filigree embroidery & carved teak rail',
+    feltStyle: 'radial-gradient(ellipse at center, #6b1122 0%, #3d0913 60%, #1a0206 100%)',
+    railStyle: 'linear-gradient(to bottom, #4a2810 0%, #291406 50%, #120802 100%)',
+    railBorder: '#c68a35',
+    goldTrim: 'linear-gradient(135deg, #fef08a 0%, #d4af37 50%, #854d0e 100%)',
+    bgGradient: 'from-amber-950 via-rose-950 to-black',
+    accentColor: '#d4af37',
+    accentText: 'text-amber-300',
+    glowShadow: '0 0 50px rgba(212, 175, 55, 0.5)',
+    badgeBg: 'bg-amber-950 border-amber-500/60 text-amber-300',
+    previewImage: '/themes/table_maharaja_ruby.jpg',
   },
   sapphire: {
     id: 'sapphire',
@@ -128,6 +150,7 @@ export const CASINO_THEMES: Record<ThemeId, CasinoTheme> = {
     accentText: 'text-cyan-300',
     glowShadow: '0 0 45px rgba(192, 132, 252, 0.5)',
     badgeBg: 'bg-purple-950 border-purple-500/60 text-purple-400',
+    previewImage: '/themes/table_cyberpunk_neon.jpg',
   },
   obsidian: {
     id: 'obsidian',
